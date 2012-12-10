@@ -1,9 +1,15 @@
 #!/bin/bash
+# set -x
+set -e
 
 function verify_apt_package_exists() {
   # $1 - name of package to test
+  if [[ -z $VERBOSE ]]; then
+    dpkg -s $1 >/dev/null 2>&1
+  else
+    dpkg -s $1
+  fi
 
-  dpkg -s $1 >/dev/null 2>&1
   if [ $? -ne 0 ];
   then
     return 1
@@ -27,7 +33,13 @@ function install_roush_apt_repo() {
     echo "deb ${uri}/${pkg_path} ${platform_name} ${repo_name}" > $apt_file_path
   fi
 
-  if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1 ); then
+  if [[ -z $VERBOSE ]]; then
+    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1
+  else
+    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key}
+  fi
+
+  if [[ $? -ne 0 ]]; then
     echo "Unable to add apt-key."
     exit 1
   fi
@@ -70,6 +82,18 @@ function install_rhel() {
   echo "Installing on RHEL"
 }
 
+function usage() {
+cat <<EOF
+usage: $0 options
+
+This script will install roush packages.
+
+OPTIONS:
+  -h  Show this message
+  -v  Verbose output
+  -c  Install the client only
+EOF
+}
 #####################
 
 arch=$(uname -m)
@@ -100,6 +124,29 @@ apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
 # echo "Arch: ${arch}"
 # echo "Platform: ${platform}"
 # echo "Version: ${platform_version}"
+
+CLIENT_ONLY=0
+VERBOSE=
+while getopts "hvc" OPTION
+do
+  case $OPTION in
+    h)
+      usage
+      exit 1
+      ;;
+    v)
+      VERBOSE=1
+      ;;
+    c)
+      CLIENT_ONLY=1
+      ;;
+    ?)
+      usage
+      exit 1
+      ;;
+  esac
+done
+
 
 case $platform in
   "ubuntu") install_ubuntu ;;
