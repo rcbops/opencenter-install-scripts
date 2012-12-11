@@ -123,7 +123,7 @@ roush_pkgs="roush-agent"
 # APT Specific variables
 apt_repo="rcb-utils"
 apt_key="765C5E49F87CBDE0"
-apt_file_name="${apt_repo_name}.list"
+apt_file_name="${apt_repo}.list"
 apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
 ####################
 
