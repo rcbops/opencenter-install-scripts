@@ -53,7 +53,14 @@ function install_ubuntu() {
   install_roush_apt_repo
 
   # Run an apt-get update to make sure sources are up to date
-  if ! ( ${aptget} -q update >/dev/null ); then
+  if [[ -z $VERBOSE ]]; then
+    ${aptget} -q update >/dev/null
+  else
+    ${aptget} update
+  fi
+
+  if [[ $? -ne 0 ]];
+  then
     echo "apt-get update failed to execute successfully."
     exit 1
   fi
