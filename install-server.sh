@@ -49,9 +49,9 @@ function install_roush_apt_repo() {
 function install_ubuntu() {
   local aptget=$(which apt-get)
 
-  # Install apt repo 
+  # Install apt repo
   install_roush_apt_repo
-  
+
   # Run an apt-get update to make sure sources are up to date
   if ! ( ${aptget} -q update >/dev/null ); then
     echo "apt-get update failed to execute successfully."
@@ -114,7 +114,7 @@ esac
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
 repo_name="rcb-utils"
-roush_pkgs="roush-simple roush"
+roush_pkgs="roush-simple roush roush-client"
 
 # APT Specific variables
 apt_key="765C5E49F87CBDE0"
@@ -125,7 +125,7 @@ apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
 # echo "Platform: ${platform}"
 # echo "Version: ${platform_version}"
 
-CLIENT_ONLY=0
+CLIENT_ONLY=
 VERBOSE=
 while getopts "hvc" OPTION
 do
