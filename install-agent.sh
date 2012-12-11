@@ -67,14 +67,21 @@ function install_ubuntu() {
   fi
 
   echo "Installing Roush-Agent"
-  if ! ( ${aptget} install -y -q ${roush_pkgs} ); then
+  if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+    echo "Failed to install roush-agent"
+    exit 1
+  fi
+
+  echo ""
+  echo "Installing Agent Plugins"
+  if ! ( ${aptget} install -y -q ${agent_plugins} ); then
     echo "Failed to install roush-agent"
     exit 1
   fi
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${roush_pkgs} )
+  pkg_list=( ${agent_pkgs} ${agent_plugins} )
   for x in ${pkg_list[@]}; do
     if ! verify_apt_package_exists ${x};
     then
@@ -116,7 +123,8 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-roush_pkgs="roush-agent"
+agent_pkgs="roush-agent"
+agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service"
 ####################
 
 ####################
