@@ -30,7 +30,7 @@ function install_roush_apt_repo() {
     # TODO(shep): Need to do some sort of checking here
     /bin/true
   else
-    echo "deb ${uri}/${pkg_path} ${platform_name} ${repo_name}" > $apt_file_path
+    echo "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
   fi
 
   if [[ -z $VERBOSE ]]; then
@@ -53,6 +53,7 @@ function install_ubuntu() {
   install_roush_apt_repo
 
   # Run an apt-get update to make sure sources are up to date
+  echo "Refreshing package list"
   if [[ -z $VERBOSE ]]; then
     ${aptget} -q update >/dev/null
   else
@@ -98,10 +99,49 @@ This script will install roush packages.
 OPTIONS:
   -h  Show this message
   -v  Verbose output
-  -c  Install the client only
 EOF
 }
-#####################
+
+
+################################################
+# -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
+################################################
+
+####################
+# Global Variables
+VERBOSE=
+####################
+
+####################
+# Package Variables
+uri="http://build.monkeypuppetlabs.com"
+pkg_path="/proposed-packages"
+roush_pkgs="roush-simple roush roush-client"
+####################
+
+####################
+# APT Specific variables
+apt_repo="rcb-utils"
+apt_key="765C5E49F87CBDE0"
+apt_file_name="${apt_repo_name}.list"
+apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
+####################
+
+# Parse options
+while getopts "hv" option
+do
+  case $option in
+    h)
+      usage
+      exit 1
+      ;;
+    v) VERBOSE=1 ;;
+    ?)
+      usage
+      exit 1
+      ;;
+  esac
+done
 
 arch=$(uname -m)
 if [ -f "/etc/lsb-release" ];
@@ -114,47 +154,16 @@ then
   platform_version=$(cat /etc/redhat-release | awk '{print $3}')
 fi
 
+# On ubuntu the version number needs to be mapped to a name
 case $platform_version in
   "12.04") platform_name="precise" ;;
 esac
-
-uri="http://build.monkeypuppetlabs.com"
-pkg_path="/proposed-packages"
-repo_name="rcb-utils"
-roush_pkgs="roush-simple roush roush-client"
-
-# APT Specific variables
-apt_key="765C5E49F87CBDE0"
-apt_file_name="${repo_name}.list"
-apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
 
 # echo "Arch: ${arch}"
 # echo "Platform: ${platform}"
 # echo "Version: ${platform_version}"
 
-CLIENT_ONLY=
-VERBOSE=
-while getopts "hvc" OPTION
-do
-  case $OPTION in
-    h)
-      usage
-      exit 1
-      ;;
-    v)
-      VERBOSE=1
-      ;;
-    c)
-      CLIENT_ONLY=1
-      ;;
-    ?)
-      usage
-      exit 1
-      ;;
-  esac
-done
-
-
+# Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
   "rhel") install_rhel ;;
