@@ -116,7 +116,7 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-roush_pkgs="roush-simple roush roush-client"
+roush_pkgs="roush-simple python-roush roush-client"
 ####################
 
 ####################
