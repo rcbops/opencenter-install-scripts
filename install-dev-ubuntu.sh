@@ -6,7 +6,7 @@
 # Requires interaction
 # Patches happily accepted.
 
-apt-get install -y git python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs23-nox
+apt-get install -y git python-setuptools python-cliapp gcc python-dev libevent-dev screen
 
 # or use the ssh links if you have your keys on said box
 git clone https://github.com/rcbops/roush.git
@@ -15,13 +15,13 @@ git clone https://github.com/rcbops/roush-client.git
 
 # setup roush
 cd roush
-./run_tests.sh  # say yes to the venv
+./run_tests.sh -V # say yes to the venv
 mkdir -p /etc/roush
 cp roush.conf /etc/roush/roush.conf
 echo 'database_uri = sqlite:////etc/roush/roush.db' >>/etc/roush/roush.conf
 tools/with_venv.sh python manage.py -c /etc/roush/roush.conf version_control
 tools/with_venv.sh python manage.py -c /etc/roush/roush.conf upgrade
-screen -d -m tools/with_venv.sh python roush.py  -c /etc/roush/roush.conf
+screen -d -m tools/with_venv.sh python roush.py  -v -c /etc/roush/roush.conf
 cd ..
 
 # setup roush-agent
