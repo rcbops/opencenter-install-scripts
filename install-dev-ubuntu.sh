@@ -19,8 +19,6 @@ cd roush
 mkdir -p /etc/roush
 cp roush.conf /etc/roush/roush.conf
 echo 'database_uri = sqlite:////etc/roush/roush.db' >>/etc/roush/roush.conf
-tools/with_venv.sh python manage.py -c /etc/roush/roush.conf version_control
-tools/with_venv.sh python manage.py -c /etc/roush/roush.conf upgrade
 screen -d -m tools/with_venv.sh python roush.py  -v -c /etc/roush/roush.conf
 cd ..
 
