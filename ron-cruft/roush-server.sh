@@ -42,7 +42,7 @@ vbell off
 startup_message off
 EOF
 
-function do_git_update {
+function do_git_update() {
     repo=$1
 
     if [ -d ${repo} ]; then

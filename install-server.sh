@@ -2,6 +2,8 @@
 # set -x
 set -e
 
+VERSION="1.0.0"
+
 function verify_apt_package_exists() {
   # $1 - name of package to test
   if [[ -z $VERBOSE ]]; then
@@ -103,6 +105,13 @@ EOF
 }
 
 
+function display_version() {
+cat <<EOF
+$0 (version: $VERSION)
+EOF
+}
+
+
 ################################################
 # -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
 ################################################
@@ -128,7 +137,7 @@ apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
 ####################
 
 # Parse options
-while getopts "hv" option
+while getopts "hvV" option
 do
   case $option in
     h)
@@ -136,6 +145,10 @@ do
       exit 1
       ;;
     v) VERBOSE=1 ;;
+    V)
+      display_version
+      exit 1
+      ;;
     ?)
       usage
       exit 1
