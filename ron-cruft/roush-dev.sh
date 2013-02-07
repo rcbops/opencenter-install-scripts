@@ -116,16 +116,31 @@ function setup_server_as() {
 }
 
 
-source ~/csrc
+if [[ -f ~/csrc ]]; then
+    source ~/csrc
+else
+    echo "Please setup your cloud credentials file in ~/csrc"
+    exit 1
+fi
 #workon work
 
 image=$(nova image-list | grep "12.04 LTS" | head -n1 | awk '{ print $2 }')
 flavor_2g=$(nova flavor-list | grep 2GB | head -n1 | awk '{ print $2 }')
 flavor_4g=$(nova flavor-list | grep 4GB | head -n1 | awk '{ print $2 }')
 
-nova boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
-nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client1) > /dev/null 2>&1
-nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client2) > /dev/null 2>&1
+if ( nova list | grep -q $(mangle_name) ); then
+    echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
+    exit 1
+fi
+
+if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
+    nova boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
+    nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client1) > /dev/null 2>&1
+    nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client2) > /dev/null 2>&1
+else
+    echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
+    exit 1
+fi
 
 wait_for_ssh "roush-server"
 wait_for_ssh "roush-client1"
