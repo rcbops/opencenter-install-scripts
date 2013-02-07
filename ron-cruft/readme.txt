@@ -12,8 +12,10 @@ Prereqs:
 
  - Nova client installed and working with cloud servers
  - A posixy environment.  I've only tested on OSX.  might not work on
-   teh loonix. NB. For OSX you may need to home brew install a newer
-   version of bash to ensure the declare function has the "-A" flag.
+   teh loonix. 
+ - For OSX you may need to install a newer version of bash and sed to ensure
+   the declare function has the "-A" flag, and the sed command to retrieve
+   the IP works (Use home brew or similar tool)
 
 Assumptions:
 
