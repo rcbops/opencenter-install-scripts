@@ -12,7 +12,8 @@ Prereqs:
 
  - Nova client installed and working with cloud servers
  - A posixy environment.  I've only tested on OSX.  might not work on
-   teh loonix.
+   teh loonix. NB. For OSX you may need to home brew install a newer
+   version of bash to ensure the declare function has the "-A" flag.
 
 Assumptions:
 
