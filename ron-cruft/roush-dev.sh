@@ -91,7 +91,7 @@ function wait_for_ssh() {
     echo "SSH ready - waiting for valid login"
     count=0
 
-    while ( ! ssh root@${ip} id | grep -q "root" ); do
+    while ( ! ssh -o StrictHostKeyChecking=no root@${ip} id | grep -q "root" ); do
         count=$(( count + 1 ))
         if [ ${count} -gt ${max_count} ]; then
             echo "timeout waiting for login"
