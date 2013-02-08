@@ -13,4 +13,5 @@ items=$(nova list | cut -d'|' -f3 | grep "^ ${CLUSTER_PREFIX}-" )
 for item in ${items}; do
     echo "Deleting ${item}"
     nova delete ${item}
+    rm /tmp/${item}.log
 done
