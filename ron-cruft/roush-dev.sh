@@ -164,6 +164,7 @@ for svr in roush-server roush-client1 roush-client2; do
     fi
 
     setup_server_as ${svr} ${what} > /tmp/$(mangle_name ${svr}).log 2>&1 &
+    echo "Setting up server $(mangle_name ${svr}) as ${what} - logging status to /tmp/$(mangle_name ${svr}).log"
     PIDS["$!"]=${svr}
 done
 
