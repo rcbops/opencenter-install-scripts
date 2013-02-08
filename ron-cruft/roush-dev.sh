@@ -1,17 +1,20 @@
 #!/usr/bin/env bash
 
 set -e
+set -u
 
 declare -A PIDS
 
 CLUSTER_PREFIX="c1"
+BASEDIR=$(dirname $0)
+SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
 fi
 
 function mangle_name() {
-    server=$1
+    server=${1:-}
 
     if [[ ${server} == ${CLUSTER_PREFIX}* ]]; then
         echo ${server}
@@ -96,7 +99,7 @@ function wait_for_ssh() {
     echo "SSH ready - waiting for valid login"
     count=0
 
-    while ( ! ssh -o StrictHostKeyChecking=no root@${ip} id | grep -q "root" ); do
+    while ( ! ssh ${SSHOPTS} root@${ip} id | grep -q "root" ); do
         count=$(( count + 1 ))
         if [ ${count} -gt ${max_count} ]; then
             echo "timeout waiting for login"
@@ -122,12 +125,12 @@ function setup_server_as() {
         scriptName=ntrapy
     fi
 
-    scp ${scriptName}.sh root@$(ip_for ${server}):/tmp
-    scp ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
-    scp known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
+    scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
+    scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
+    scp ${SSHOPTS} ${BASEDIR}/known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
 
-    ssh root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
-    ssh root@$(ip_for ${server}) 'bash -c "rm /root/.ssh/id_rsa"'
+    ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
+    ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
 }
 
 
@@ -137,11 +140,15 @@ else
     echo "Please setup your cloud credentials file in ${HOME}/csrc"
     exit 1
 fi
-#workon work
 
-image=$(nova image-list | grep "12.04 LTS" | head -n1 | awk '{ print $2 }')
-flavor_2g=$(nova flavor-list | grep 2GB | head -n1 | awk '{ print $2 }')
-flavor_4g=$(nova flavor-list | grep 4GB | head -n1 | awk '{ print $2 }')
+
+
+imagelist=$(nova image-list)
+flavorlist=$(nova flavor-list)
+
+image=$(echo "${imagelist}" | grep "12.04 LTS" | head -n1 | awk '{ print $2 }')
+flavor_2g=$(echo "${flavorlist}" | grep 2GB | head -n1 | awk '{ print $2 }')
+flavor_4g=$(echo "${flavorlist}" | grep 4GB | head -n1 | awk '{ print $2 }')
 
 if ( nova list | grep -q $(mangle_name) ); then
     echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
@@ -182,7 +189,7 @@ done
 fail=0
 
 for pid in ${!PIDS[@]}; do
-    echo "Waiting on pid ${pid}"
+    echo "Waiting on pid ${pid}: ${PIDS[${pid}]}"
     if [ ${pid} -ne 0 ]; then
         wait ${pid} > /dev/null 2>&1
         echo "Reaped ${pid}"
