@@ -107,6 +107,11 @@ function setup_server_as() {
     as=$2
     ip=$(ip_for "roush-server")
 
+    if [[ ! -f ${HOME}/.ssh/id_github ]]
+        echo "Please setup your github key in ${HOME}/.ssh/id_github"
+        exit 1
+    fi
+
     scp roush-server.sh root@$(ip_for ${server}):/tmp
     scp ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     scp known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
@@ -116,10 +121,10 @@ function setup_server_as() {
 }
 
 
-if [[ -f ~/csrc ]]; then
-    source ~/csrc
+if [[ -f ${HOME}/csrc ]]; then
+    source ${HOME}/csrc
 else
-    echo "Please setup your cloud credentials file in ~/csrc"
+    echo "Please setup your cloud credentials file in ${HOME}/csrc"
     exit 1
 fi
 #workon work
