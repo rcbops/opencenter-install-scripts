@@ -40,7 +40,7 @@ function wait_for_ip() {
 
     echo "Waiting for IPv4 on ${server}"
 
-    while( true ); do
+    while( ! nova list | grep ${server} | grep -q "ERROR" ); do
         ip=$(ip_for ${server});
         if [ "${ip}" == "" ]; then
             sleep 20
@@ -54,6 +54,11 @@ function wait_for_ip() {
             break
         fi
     done
+
+    if ( nova list | grep ${server} | grep -q "ERROR" ); then
+        echo "${server} in ERROR state, build failed"
+        exit 1
+    fi
 }
 
 function wait_for_ssh() {
@@ -107,6 +112,11 @@ function setup_server_as() {
     as=$2
     ip=$(ip_for "roush-server")
 
+    if [[ ! -f ${HOME}/.ssh/id_github ]]; then
+        echo "Please setup your github key in ${HOME}/.ssh/id_github"
+        exit 1
+    fi
+
     scp roush-server.sh root@$(ip_for ${server}):/tmp
     scp ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     scp known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
@@ -116,10 +126,10 @@ function setup_server_as() {
 }
 
 
-if [[ -f ~/csrc ]]; then
-    source ~/csrc
+if [[ -f ${HOME}/csrc ]]; then
+    source ${HOME}/csrc
 else
-    echo "Please setup your cloud credentials file in ~/csrc"
+    echo "Please setup your cloud credentials file in ${HOME}/csrc"
     exit 1
 fi
 #workon work
@@ -153,7 +163,8 @@ for svr in roush-server roush-client1 roush-client2; do
         what=server
     fi
 
-    setup_server_as ${svr} ${what} > /tmp/${svr}.log 2>&1 &
+    setup_server_as ${svr} ${what} > /tmp/$(mangle_name ${svr}).log 2>&1 &
+    echo "Setting up server $(mangle_name ${svr}) as ${what} - logging status to /tmp/$(mangle_name ${svr}).log"
     PIDS["$!"]=${svr}
 done
 
