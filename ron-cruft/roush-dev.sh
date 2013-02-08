@@ -40,7 +40,7 @@ function wait_for_ip() {
 
     echo "Waiting for IPv4 on ${server}"
 
-    while( ! nova list | grep ${server} | grep -q "ERROR" ); do
+    while ( ! nova list | grep ${server} | grep -q "ERROR" ); do
         ip=$(ip_for ${server});
         if [ "${ip}" == "" ]; then
             sleep 20
@@ -117,11 +117,16 @@ function setup_server_as() {
         exit 1
     fi
 
-    scp roush-server.sh root@$(ip_for ${server}):/tmp
+    scriptName=roush-server
+    if [ "$1" == "ntrapy" ]; then
+        scriptName=ntrapy
+    fi
+
+    scp ${scriptName}.sh root@$(ip_for ${server}):/tmp
     scp ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     scp known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
 
-    ssh root@$(ip_for ${server}) "cat /tmp/roush-server.sh | /bin/bash -s - ${as} ${ip}"
+    ssh root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
     ssh root@$(ip_for ${server}) 'bash -c "rm /root/.ssh/id_rsa"'
 }
 
@@ -147,6 +152,7 @@ if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
     nova boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
     nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client1) > /dev/null 2>&1
     nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client2) > /dev/null 2>&1
+    nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name ntrapy) > /dev/null 2>&1
 else
     echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
     exit 1
@@ -155,12 +161,17 @@ fi
 wait_for_ssh "roush-server"
 wait_for_ssh "roush-client1"
 wait_for_ssh "roush-client2"
+wait_for_ssh "ntrapy"
 
-for svr in roush-server roush-client1 roush-client2; do
+for svr in roush-server roush-client1 roush-client2 ntrapy; do
     what=client
 
     if [ "${svr}" == "roush-server" ]; then
         what=server
+    fi
+
+    if [ "${svr}" == "ntrapy" ]; then
+        what=ntrapy
     fi
 
     setup_server_as ${svr} ${what} > /tmp/$(mangle_name ${svr}).log 2>&1 &
