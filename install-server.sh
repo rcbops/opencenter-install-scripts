@@ -69,14 +69,27 @@ function install_ubuntu() {
   fi
 
   echo "Installing Roush-Server"
-  if ! ( ${aptget} install -y -q ${roush_pkgs} ); then
+  if ! ( ${aptget} install -y -q ${server_pkgs} ); then
     echo "Failed to install roush"
+    exit 1
+  fi
+
+  echo "Installing Roush-Agent"
+  if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+    echo "Failed to install roush-agent"
+    exit 1
+  fi
+
+  echo ""
+  echo "Installing Agent Plugins"
+  if ! ( ${aptget} install -y -q ${agent_plugins} ); then
+    echo "Failed to install roush-agent"
     exit 1
   fi
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${roush_pkgs} )
+  pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
   for x in ${pkg_list[@]}; do
     if ! verify_apt_package_exists ${x};
     then
@@ -85,6 +98,13 @@ function install_ubuntu() {
       exit 1
     fi
   done
+
+  if ! [[ -z $ROUSH_SERVER ]];then
+    # FIXME(shep): This should really be debconf hackery instead
+    sed -i "s/127.0.0.1/0.0.0.0/" /etc/roush/agent.conf.d/roush-agent-task.conf
+    sed -i "s/127.0.0.1/0.0.0.0/" /etc/roush/agent.conf.d/roush-agent-adventurator.conf
+    /etc/init.d/roush-agent restart
+  fi
 }
 
 
@@ -125,7 +145,9 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-roush_pkgs="roush-simple python-roush roush-client"
+server_pkgs="roush-simple python-roush roush-client"
+agent_pkgs="roush-agent"
+agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service roush-agent-output-adventurator roush-agent-output-packages"
 ####################
 
 ####################
