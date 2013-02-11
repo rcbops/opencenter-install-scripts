@@ -99,6 +99,7 @@ function install_ubuntu() {
     fi
   done
 
+  ROUSH_SERVER=${ROUSH_SERVER:-0.0.0.0}
   if ! [[ -z $ROUSH_SERVER ]];then
     # FIXME(shep): This should really be debconf hackery instead
     sed -i "s/127.0.0.1/0.0.0.0/" /etc/roush/agent.conf.d/roush-agent-task.conf
