@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e
-set -x
+#set -x
 
 echo INSTALLING AS ${1} against server IP of ${2}
 
@@ -25,13 +25,13 @@ function do_git_update() {
     fi
 }
 
+rm -rf .nvm .bower .anvil* .npm
+
 curl https://raw.github.com/creationix/nvm/master/install.sh | sh
 
-pushd .nvm
-source nvm.sh
+. ~/.nvm/nvm.sh
 nvm install ${nvmVersion}
 nvm alias default ${nvmVersion}
-popd
 
 do_git_update ntrapy
 
@@ -48,7 +48,6 @@ config.interval = 5000;
 
 module.exports = config;
 EOF
-export PATH=$PATH:/root/.nvm/v${nvmVersion}/bin
 
 make
 bash ntrapy
