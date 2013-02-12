@@ -16,7 +16,7 @@ Prerequisities
 
     * Nova client installed and working with cloud, for Rackspace cloud see:
     http://www.rackspace.com/knowledge_center/article/installing-python-novaclient-on-linux-and-mac-os
-    * Either supernova configured and an environment variable exported NOVA="supernova your-env" or nova env variables set in ~/csrc. 
+    * Either supernova configured and an environment variable exported NOVA="supernova your-env" or nova env variables set in ~/csrc.
     * Up to date versions of bash & sed - this may require updating on OSX
     * ~/.ssh/authorized_keys file exists, containing your key.
     * ~/.ssh/id_github file exists, containing your github key:

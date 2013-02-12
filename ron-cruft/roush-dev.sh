@@ -6,7 +6,7 @@ set -u
 declare -A PIDS
 
 #command to use for nova; read from environment or "nova" by default.
-#This is so you can set NOVA="supernova env" before running the script. 
+#This is so you can set NOVA="supernova env" before running the script.
 NOVA=${NOVA:-nova}
 RERUN=${RERUN:-false}
 
@@ -143,7 +143,7 @@ instance_exists(){
 }
 
 #only need to source nova env if not using supernova
-if [[ "$NOVA" == "nova" ]] 
+if [[ "$NOVA" == "nova" ]]
 then
     if [[ -f ${HOME}/csrc ]]; then
         source ${HOME}/csrc
