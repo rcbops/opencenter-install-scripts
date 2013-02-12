@@ -4,6 +4,8 @@ import requests
 import time
 import os
 import sys
+import socket
+import urlparse
 
 
 def dump_info(endpoint, task_id):
@@ -15,25 +17,42 @@ def dump_info(endpoint, task_id):
     if (task_info.status_code >= 200 and task_info.status_code < 300):
         task_status = task_info.json['task']['state']
 
-    log = requests.get(log_request_url)
-    log_data = None
+    log = requests.get(log_request_url + '?watch')
 
     if (log.status_code >= 200 and log.status_code < 300):
-        log_data = log.json['log']
-
-    os.system('clear')
-    print 'Task %d state: %s\n' % (task_id, task_status)
-
-    if log_data is not None:
-        print log_data
+        txid = log.json['request']
     else:
-        print 'Error returning log info'
-        return False
+        print 'error getting transaction'
+        sys.exit(1)
 
-    if task_status != 'running':
-        return False
+    urlinfo = urlparse.urlparse(endpoint)
 
-    return True
+    fd = socket.socket()
+    fd.connect((urlinfo.hostname, urlinfo.port))
+    fd.send('GET /tasks/%d/logs/%s HTTP/1.0\n\n' % (task_id, txid))
+
+    linedata = []
+
+    while linedata == []:
+        data = fd.recv(4096)
+        linedata = data.split('\n')
+
+        while(len(linedata) > 0 and \
+                  linedata[0] != '' and \
+                  linedata[0] != '\r'):
+            linedata.pop(0)
+
+    sys.stdout.write('\n'.join(linedata))
+
+    while True:
+        data = fd.recv(1024)
+        if data == '':
+            break;
+
+        sys.stdout.write(data)
+
+    fd.close()
+
 
 endpoint = os.environ.get('ROUSH_ENDPOINT', 'http://localhost:8080')
 if len(sys.argv) < 2:
@@ -42,5 +61,4 @@ if len(sys.argv) < 2:
 
 task_id = int(sys.argv[1])
 
-while dump_info(endpoint, task_id):
-    time.sleep(10)
+dump_info(endpoint, task_id)
