@@ -26,8 +26,7 @@ function mangle_name() {
 function ip_for() {
     server=$(mangle_name $1)
 
-    ip=$(nova show ${server} | grep "public network" | sed -e  "s/.*[ ]\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/")
-
+    ip=$(nova show ${server} | sed -En "/public network/ s/^.* ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*$/\1/p")
     if [[ ${ip} =~ "." ]]; then
         echo ${ip}
     else
