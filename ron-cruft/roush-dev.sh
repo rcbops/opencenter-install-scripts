@@ -5,6 +5,11 @@ set -u
 
 declare -A PIDS
 
+#command to use for nova; read from environment or "nova" by default.
+#This is so you can set NOVA="supernova env" before running the script. 
+NOVA=${NOVA:-nova}
+RERUN=${RERUN:-false}
+
 CLUSTER_PREFIX="c1"
 BASEDIR=$(dirname $0)
 SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
@@ -26,7 +31,7 @@ function mangle_name() {
 function ip_for() {
     server=$(mangle_name $1)
 
-    ip=$(nova show ${server} | grep "public network" | sed -e  "s/.*[ ]\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/")
+    ip=$($NOVA show ${server} | grep "public network" | sed -e  "s/.*[ ]\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/")
 
     if [[ ${ip} =~ "." ]]; then
         echo ${ip}
@@ -43,7 +48,7 @@ function wait_for_ip() {
 
     echo "Waiting for IPv4 on ${server}"
 
-    while ( ! nova list | grep ${server} | grep -q "ERROR" ); do
+    while ( ! $NOVA list | grep ${server} | grep -q "ERROR" ); do
         ip=$(ip_for ${server});
         if [ "${ip}" == "" ]; then
             sleep 20
@@ -58,7 +63,7 @@ function wait_for_ip() {
         fi
     done
 
-    if ( nova list | grep ${server} | grep -q "ERROR" ); then
+    if ( $NOVA list | grep ${server} | grep -q "ERROR" ); then
         echo "${server} in ERROR state, build failed"
         exit 1
     fi
@@ -133,33 +138,44 @@ function setup_server_as() {
     ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
 }
 
+instance_exists(){
+    name=$(mangle_name $1)
+    $NOVA list |grep -q $name
+}
 
-if [[ -f ${HOME}/csrc ]]; then
-    source ${HOME}/csrc
-else
-    echo "Please setup your cloud credentials file in ${HOME}/csrc"
-    exit 1
+#only need to source nova env if not using supernova
+if [[ "$NOVA" == "nova" ]] 
+then
+    if [[ -f ${HOME}/csrc ]]; then
+        source ${HOME}/csrc
+    else
+        echo "Please setup your cloud credentials file in ${HOME}/csrc"
+        exit 1
+    fi
 fi
 
 
 
-imagelist=$(nova image-list)
-flavorlist=$(nova flavor-list)
+imagelist=$($NOVA image-list)
+flavorlist=$($NOVA flavor-list)
 
 image=$(echo "${imagelist}" | grep "12.04 LTS" | head -n1 | awk '{ print $2 }')
 flavor_2g=$(echo "${flavorlist}" | grep 2GB | head -n1 | awk '{ print $2 }')
 flavor_4g=$(echo "${flavorlist}" | grep 4GB | head -n1 | awk '{ print $2 }')
 
-if ( nova list | grep -q $(mangle_name) ); then
-    echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
-    exit 1
+if ! $RERUN
+then
+    if ( $NOVA list | grep -q $(mangle_name) ); then
+        echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
+        exit 1
+    fi
 fi
 
 if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
-    nova boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
-    nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client1) > /dev/null 2>&1
-    nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client2) > /dev/null 2>&1
-    nova boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name ntrapy) > /dev/null 2>&1
+    instance_exists roush-server || $NOVA boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
+    instance_exists roush-client1 || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client1) > /dev/null 2>&1
+    instance_exists roush-client2 || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client2) > /dev/null 2>&1
+    instance_exists ntrapy || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name ntrapy) > /dev/null 2>&1
 else
     echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
     exit 1

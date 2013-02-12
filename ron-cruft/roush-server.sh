@@ -10,13 +10,19 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y python-software-properties
 
-add-apt-repository ppa:cassou/emacs
+add-apt-repository -y ppa:cassou/emacs
 
 cat > /etc/apt/sources.list.d/rcb-utils.list <<EOF
 deb http://build.monkeypuppetlabs.com/proposed-packages precise rcb-utils
 EOF
 
-apt-key adv --keyserver=pgp.mit.edu --recv-keys 765C5E49F87CBDE0
+echo "Getting key"
+until apt-key adv --keyserver=pgp.mit.edu --recv-keys 765C5E49F87CBDE0
+do
+    sleep 3
+    echo -n .
+done
+
 
 apt-get update
 apt-get -y upgrade

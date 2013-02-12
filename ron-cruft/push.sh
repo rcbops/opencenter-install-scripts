@@ -2,6 +2,8 @@
 
 set -e
 
+NOVA=${NOVA:-nova}
+
 exec 99>/tmp/push.log
 export BASH_XTRACEFD=99
 set -x
@@ -41,7 +43,7 @@ function mangle_name() {
 function ip_for() {
     server=$(mangle_name $1)
 
-    ip=$(nova show ${server} | grep "public network" | sed -e  "s/.*[ ]\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/")
+    ip=$($NOVA show ${server} | grep "public network" | sed -e  "s/.*[ ]\([0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\).*/\1/")
 
     if [[ ${ip} =~ "." ]]; then
         echo ${ip}
@@ -55,7 +57,7 @@ if [ ! -d ../roush-agent ] || [ ! -d ../roush ] || [ ! -d ../roush-client ]; the
     exit 1
 fi
 
-nodes=$(nova list | cut -d'|' -f3 | grep "^ ${CLUSTER_PREFIX}" | grep -v "ntrapy" )
+nodes=$($NOVA list | cut -d'|' -f3 | grep "^ ${CLUSTER_PREFIX}" | grep -v "ntrapy" )
 
 for node in ${nodes}; do
     ip=$(ip_for ${node})
