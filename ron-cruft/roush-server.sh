@@ -91,22 +91,24 @@ pushd roush-agent
 cat > local.conf <<EOF
 [main]
 plugin_dir = %(base_dir)s/roushagent/plugins
+
 input_handlers = %(plugin_dir)s/input/task_input.py
+
 output_handlers = %(plugin_dir)s/output
 
-log_config = local-log.cfg
-trans_log_dir = trans_logs
-bash_path = roushagent/plugins/lib/bash
+trans_log_dir = %(base_dir)s/trans_logs
 
-[taskerator]
-endpoint = http://${2}:8080/admin
+log_config = %(base_dir)s/local-log.cfg
 
-[chef]
-script_path = roushagent/plugins/lib/chef
+bash_path = %(base_dir)s/roushagent/plugins/lib/bash
 
-[adventurator]
-endpoint = http://${2}:8080/admin
+[restish]
+bind_address = 0.0.0.0
+bind_port = 8000
 
+[roush]
+endpoint = http://${2}:8080
+admin_endpoint= http://${2}:8080/admin
 EOF
 
 cat > local-log.cfg <<EOF
