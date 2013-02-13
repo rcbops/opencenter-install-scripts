@@ -36,17 +36,16 @@ nvm alias default ${nvmVersion}
 do_git_update ntrapy
 
 pushd ntrapy
-cat > config.js <<EOF
-var config = {};
-
-config.roush_url = "http://${2}:8080";
-config.db = "ntrapy";
-config.db_dir = ".";
-config.secret = "???";
-config.timeout = {short: 2000, long: 30000};
-config.interval = 5000;
-
-module.exports = config;
+cat > config.json <<EOF
+{
+  "allowedKeys": ["allowedKeys", "timeout", "throttle"],
+  "roush_url": "http://${2}:8080",
+  "timeout": {
+    "short": 2000,
+    "long": 30000
+  },
+  "throttle": 500
+}
 EOF
 
 make
