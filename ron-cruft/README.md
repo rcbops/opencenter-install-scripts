@@ -59,5 +59,4 @@ roush-dev.sh with the same prefix as used initially.
 TODO/Issues:
 -----------------------
 
-nTrapy installs, but doesn't start - so you may need to manually log onto the nTrapy server and start it.
 push.sh doesn't currently work with nTrapy
