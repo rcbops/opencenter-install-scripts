@@ -216,7 +216,7 @@ for pid in ${!PIDS[@]}; do
 done
 
 server_ip=$(ip_for roush-server)
-echo $'\n*** COMPLETE ***\n'
-echo $'Run \"export ROUSH_ENDPOINT=http://${server_ip}:8080\" to use the roushcli'
+echo -e "\n*** COMPLETE ***\n"
+echo -e "Run \"export ROUSH_ENDPOINT=http://${server_ip}:8080\" to use the roushcli"
 ntrapy_ip=$(ip_for ntrapy)
-echo $'Or connect to \"http://${ntrapy_ip}:3000\" to manage via the ntrapy interface\n'
+echo -e "Or connect to \"http://${ntrapy_ip}:3000\" to manage via the ntrapy interface\n"
