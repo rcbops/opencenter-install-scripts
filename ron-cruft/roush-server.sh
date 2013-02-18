@@ -88,70 +88,8 @@ EOF
 fi
 
 pushd roush-agent
-cat > local.conf <<EOF
-[main]
-plugin_dir = %(base_dir)s/roushagent/plugins
-
-input_handlers = %(plugin_dir)s/input/task_input.py
-
-output_handlers = %(plugin_dir)s/output
-
-trans_log_dir = %(base_dir)s/trans_logs
-
-log_config = %(base_dir)s/local-log.cfg
-
-bash_path = %(base_dir)s/roushagent/plugins/lib/bash
-
-[chef]
-cookbook_channels_manifest_url = http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CHANNELS.manifest
-
-[restish]
-bind_address = 0.0.0.0
-bind_port = 8000
-
-[endpoints]
-root = http://${2}:8080
-admin = http://${2}:8080/admin
-EOF
-
-cat > local-log.cfg <<EOF
-[loggers]
-keys=root
-
-[handlers]
-keys=stderr
-
-[formatters]
-keys=default
-
-[logger_root]
-level=DEBUG
-handlers=stderr
-
-[handler_stderr]
-class=StreamHandler
-level=DEBUG
-#formatter=default
-args=(sys.stderr,)
-
-[handler_syslog]
-class=logging.handlers.SysLogHandler
-level=NOTSET
-#formatter=default
-args=("/dev/log",)
-
-[handler_file]
-class=FileHandler
-level=NOTSET
-#formatter=default
-args=('roush-agent.log')
-
-[formatter_default]
-format=%(asctime)s - %(name)s - %(levelname)s - %(message)s
-class=logging.Formatter
-datefmt=%Y-%m-%d %H:%M:%S
-
-EOF
+sed "s/127.0.0.1/${2}/g" roush-agent.conf.sample > local.conf
+sed "s/NOTSET/DEBUG/g" log.cfg > local-log.cfg
 PYTHONPATH=../roush screen -S roush-agent -d -m python ./roush-agent.py -v -c ./local.conf
 popd
 
