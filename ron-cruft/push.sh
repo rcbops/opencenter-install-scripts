@@ -56,7 +56,7 @@ if [ ! -d ../roush-agent ] || [ ! -d ../roush ] || [ ! -d ../roush-client ]; the
     exit 1
 fi
 
-nodes=$($NOVA list | cut -d'|' -f3 | grep "^ ${CLUSTER_PREFIX}-" | grep -v "ntrapy" )
+nodes=$($NOVA list |grep -o "${CLUSTER_PREFIX}-[a-Z0-9_-]*" | grep -v "ntrapy" )
 
 for node in ${nodes}; do
     ip=$(ip_for ${node})
