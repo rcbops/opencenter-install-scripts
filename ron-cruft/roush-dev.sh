@@ -53,11 +53,11 @@ function wait_for_ip() {
             sleep 20
             count=$(( count + 1 ))
             if [ ${count} -gt ${max_count} ]; then
-                echo "Aborting... to slow"
+                echo "Aborting... too slow"
                 exit 1
             fi
         else
-            echo "Got IPv4: ${ip}"
+            echo "Got IPv4: ${ip} for server: ${server}"
             break
         fi
     done
