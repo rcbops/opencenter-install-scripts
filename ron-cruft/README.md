@@ -14,8 +14,9 @@ export ROUSH_ENDPOINT=http://<ip of server>:8080
 Prerequisities
 -----------------------
 
-* Nova client installed and working with cloud, for Rackspace cloud see:
+* Nova client installed and working with cloud, specifically returning network information, for Rackspace cloud see:
     http://www.rackspace.com/knowledge_center/article/installing-python-novaclient-on-linux-and-mac-os
+  * NB: You may need an updated version of nova-client, to ensure network information is appropriately returned.
 * Either of these:
   * supernova configured and an environment variable exported NOVA="supernova your-env"
   * nova env variables set in ~/csrc.
