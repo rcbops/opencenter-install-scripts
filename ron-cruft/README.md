@@ -8,8 +8,8 @@ Installing Roush Cluster
 
     ./roush-dev.sh <Cluster-Name> <Number of Clients>
 
-Number of Clients defaults to 2 if left unspecified
-If you are using Roush-client locally you can set your endpoint:
+* Number of Clients defaults to 2 if left unspecified
+* If you are using Roush-client locally you can set your endpoint:
 export ROUSH_ENDPOINT=http://<ip of server>:8080
 
 Prerequisities
