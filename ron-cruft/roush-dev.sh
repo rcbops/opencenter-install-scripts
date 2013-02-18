@@ -11,11 +11,21 @@ NOVA=${NOVA:-nova}
 RERUN=${RERUN:-false}
 
 CLUSTER_PREFIX="c1"
+CLIENT_COUNT=2
 BASEDIR=$(dirname $0)
 SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
+fi
+
+if [ $# -eq 2 ]; then
+    if [ $2 -eq $2 2>/dev/null ]; then
+        CLIENT_COUNT=$2
+    else
+        echo "Usage: roush-dev.sh <Cluster-Prefix> <Number of Clients>"
+        exit 1
+    fi
 fi
 
 function mangle_name() {
@@ -172,20 +182,25 @@ fi
 
 if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
     instance_exists roush-server || $NOVA boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
-    instance_exists roush-client1 || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client1) > /dev/null 2>&1
-    instance_exists roush-client2 || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client2) > /dev/null 2>&1
+    for client in $(seq 1 $CLIENT_COUNT); do
+        instance_exists roush-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client${client}) > /dev/null 2>&1
+    done
     instance_exists ntrapy || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name ntrapy) > /dev/null 2>&1
 else
     echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
     exit 1
 fi
 
+nodes=("roush-server")
 wait_for_ssh "roush-server"
-wait_for_ssh "roush-client1"
-wait_for_ssh "roush-client2"
+for client in $(seq 1 $CLIENT_COUNT); do
+    wait_for_ssh "roush-client${client}"
+    nodes=(${nodes[@]} "roush-client${client}")
+done
 wait_for_ssh "ntrapy"
+nodes=(${nodes[@]} "ntrapy")
 
-for svr in roush-server roush-client1 roush-client2 ntrapy; do
+for svr in ${nodes[@]}; do
     what=client
 
     if [ "${svr}" == "roush-server" ]; then
