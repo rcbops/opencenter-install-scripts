@@ -102,13 +102,16 @@ log_config = %(base_dir)s/local-log.cfg
 
 bash_path = %(base_dir)s/roushagent/plugins/lib/bash
 
+[chef]
+cookbook_channels_manifest_url = http://8a8313241d245d72fc52-b3448c2b169a7d986fbb3d4c6b88e559.r9.cf1.rackcdn.com/CHANNELS.manifest
+
 [restish]
 bind_address = 0.0.0.0
 bind_port = 8000
 
-[roush]
-endpoint = http://${2}:8080
-admin_endpoint= http://${2}:8080/admin
+[endpoints]
+root = http://${2}:8080
+admin = http://${2}:8080/admin
 EOF
 
 cat > local-log.cfg <<EOF
