@@ -34,10 +34,12 @@ This will remove all cloud servers in the cluster and delete the specific logs i
 Pushing updates to the Cluster
 -----------------------
 
-From within "roush", "roush-agent", "roush-client" directories on your local laptop/desktop
+From within "roush", "roush-agent", "roush-client", "ntrapy" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./push.sh <Cluster-Name>
+    ./push.sh <Cluster-Name> <repo>
+    <repo> defaults to "roush-all" which will include roush/roush-agent/roush-client
+    <repo> possible options: {roush-all | roush | roush-client | roush-agent | ntrapy}
 
 Tailing Task Logs on Roush servers:
 -----------------------
@@ -55,8 +57,3 @@ roush-dev.sh with the same prefix as used initially.
     export RERUN=true
     ./roush-dev.sh <Cluster-Name>
 
-
-TODO/Issues:
------------------------
-
-push.sh doesn't currently work with nTrapy
