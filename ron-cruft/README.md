@@ -39,9 +39,10 @@ Pushing updates to the Cluster
 From within "roush", "roush-agent", "roush-client", "ntrapy" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./push.sh <Cluster-Name> <repo>
+    ./push.sh <Cluster-Name> <repo> <repo path>
     <repo> defaults to "roush-all" which will include roush/roush-agent/roush-client
     <repo> possible options: {roush-all | roush | roush-client | roush-agent | ntrapy}
+    <repo path> can be left blank if you are within one of the directories, otherwise specify the path
 
 Tailing Task Logs on Roush servers:
 -----------------------

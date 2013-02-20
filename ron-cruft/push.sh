@@ -17,7 +17,7 @@
 set -e
 
 NOVA=${NOVA:-nova}
-
+REPO_PATH="../"
 exec 99>/tmp/push.log
 export BASH_XTRACEFD=99
 set -x
@@ -35,7 +35,7 @@ function on_exit() {
 declare -A PIDS
 declare -A IPADDRS
 
-SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+SSHOPTS="-o -q UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 CLUSTER_PREFIX="c1"
 
@@ -49,6 +49,18 @@ if [ "x$2" != "x" ]; then
     PUSH_PROJECT=$2
 else
     echo "No option specified, defaulting to 'roush-all'"
+fi
+
+if [ $# -ge 3 ]; then
+    REPO_PATH=$3
+    last_char=${REPO_PATH: -1:1}
+    if [ $last_char != / ]; then
+        REPO_PATH="$REPO_PATH"/
+    fi
+    if [ ! -d ${REPO_PATH}roush-agent ] && [ ! -d ${REPO_PATH}roush ] && [ ! -d ${REPO_PATH}roush-client ] && [ ! -d ${REPO_PATH}ntrapy ]; then
+        echo "No repo's in specified path"
+        exit 1
+    fi
 fi
 
 function mangle_name() {
@@ -76,14 +88,14 @@ function repo_push() {
     repo=$1
     ip=$2
     echo " - pushing ${repo}"
-    pushd ../${repo} >&99 2>&1
+    pushd ${REPO_PATH}${repo} >&99 2>&1
     git push root@${ip}:/root/${repo} HEAD:master >&99 2>&1
     ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
     popd >&99 2>&1
 }
 
 function push_roush_agent() {
-    if [ ! -d ../roush-agent ] || [ ! -d ../roush ]; then
+    if [ ! -d ${REPO_PATH}roush-agent ] || [ ! -d ${REPO_PATH}roush ]; then
         echo "Not sitting in top level roush dir or roush-agent/roush directory doesnt exist"
         exit 1
     fi
@@ -100,7 +112,7 @@ function push_roush_agent() {
     ssh ${SSHOPTS} root@${ip} /bin/bash -c "cd roush-agent; cd roush-agent; PYTHONPATH=../roush screen -S roush-agent -d -m ./roush-agent.py -v -c ./local.conf"
 }
 function push_roush_server() {
-    if [ ! -d ../roush ]; then
+    if [ ! -d ${REPO_PATH}roush ]; then
         echo 'Not sitting in top level roush dir or roush directory doesnt exist'
         exit 1
     fi
@@ -116,7 +128,7 @@ function push_roush_server() {
 }
 
 function push_roush_client() {
-    if [ ! -d ../roush-client ]; then
+    if [ ! -d ${REPO_PATH}roush-client ]; then
        echo 'Not sitting in top level roush-client dir or roush-client directory doesnt exist'
        exit 1
     fi
@@ -130,7 +142,7 @@ function push_roush_client() {
 }
 
 function push_ntrapy() {
-    if [ ! -d ../ntrapy ]; then
+    if [ ! -d ${REPO_PATH}ntrapy ]; then
         echo 'Not sitting in top level ntrapy dir or ntrapy directory doesnt exist'
         exit 1
     fi
