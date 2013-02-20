@@ -35,7 +35,7 @@ function on_exit() {
 declare -A PIDS
 declare -A IPADDRS
 
-SSHOPTS="-o -q UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 CLUSTER_PREFIX="c1"
 
