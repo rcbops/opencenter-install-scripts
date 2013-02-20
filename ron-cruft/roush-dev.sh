@@ -13,7 +13,7 @@ RERUN=${RERUN:-false}
 CLUSTER_PREFIX="c1"
 CLIENT_COUNT=2
 BASEDIR=$(dirname $0)
-SSHOPTS="-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
