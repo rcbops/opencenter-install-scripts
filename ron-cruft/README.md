@@ -6,11 +6,12 @@ This will setup a cluster containing a Roush Server, 2 Roush Clients and a nTrap
 Installing Roush Cluster
 -----------------------
 
-    ./roush-dev.sh <Cluster-Name> <Number of Clients>
+    ./roush-dev.sh <Cluster-Name> <Number of Clients> {--packages}
 
 * Number of Clients defaults to 2 if left unspecified
 * If you are using Roush-client locally you can set your endpoint:
 export ROUSH_ENDPOINT=http://<ip of server>:8080
+* --packages will install from packages instead of github repos, not for Dev work.
 
 Prerequisities
 -----------------------

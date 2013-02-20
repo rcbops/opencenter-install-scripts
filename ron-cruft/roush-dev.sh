@@ -23,21 +23,32 @@ declare -A PIDS
 #This is so you can set NOVA="supernova env" before running the script.
 NOVA=${NOVA:-nova}
 RERUN=${RERUN:-false}
-
+USE_PACKAGES=false
 CLUSTER_PREFIX="c1"
 CLIENT_COUNT=2
 BASEDIR=$(dirname $0)
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+NTRAPY_PORT=3000
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
 fi
 
-if [ $# -eq 2 ]; then
+if [ $# -ge 2 ]; then
     if [ $2 -eq $2 2>/dev/null ]; then
         CLIENT_COUNT=$2
     else
-        echo "Usage: roush-dev.sh <Cluster-Prefix> <Number of Clients>"
+        echo "Usage: roush-dev.sh <Cluster-Prefix> <Number of Clients> {--packages}"
+        exit 1
+    fi
+fi
+
+if [ $# -ge 3 ]; then
+    if [ "$3" == "--packages" ]; then
+        USE_PACKAGES=true
+        NTRAPY_PORT=80
+    else
+        echo "Usage: roush-dev.sh <Cluster-Prefix> <Nimber of Clients> {--packages}"
         exit 1
     fi
 fi
@@ -153,6 +164,10 @@ function setup_server_as() {
         scriptName=ntrapy
     fi
 
+    if [ $USE_PACKAGES ]; then
+        scriptName="roush-server-packaged"
+    fi
+
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
     scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     scp ${SSHOPTS} ${BASEDIR}/known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
@@ -248,4 +263,4 @@ server_ip=$(ip_for roush-server)
 echo -e "\n*** COMPLETE ***\n"
 echo -e "Run \"export ROUSH_ENDPOINT=http://${server_ip}:8080\" to use the roushcli"
 ntrapy_ip=$(ip_for ntrapy)
-echo -e "Or connect to \"http://${ntrapy_ip}:3000\" to manage via the ntrapy interface\n"
+echo -e "Or connect to \"http://${ntrapy_ip}:${NTRAPY_PORT}\" to manage via the ntrapy interface\n"
