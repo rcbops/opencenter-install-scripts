@@ -21,6 +21,13 @@ echo INSTALLING AS ${1} against server IP of ${2}
 
 export DEBIAN_FRONTEND=noninteractive
 
+echo "Getting key"
+until apt-key adv --keyserver=keyserver.ubuntu.com --recv-keys 765C5E49F87CBDE0
+do
+    sleep 3
+    echo -n .
+done
+
 apt-get update
 apt-get install -y python-software-properties
 
@@ -29,13 +36,6 @@ add-apt-repository -y ppa:cassou/emacs
 cat > /etc/apt/sources.list.d/rcb-utils.list <<EOF
 deb http://build.monkeypuppetlabs.com/proposed-packages precise rcb-utils
 EOF
-
-echo "Getting key"
-until apt-key adv --keyserver=pgp.mit.edu --recv-keys 765C5E49F87CBDE0
-do
-    sleep 3
-    echo -n .
-done
 
 
 apt-get update
