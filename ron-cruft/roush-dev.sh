@@ -164,7 +164,7 @@ function setup_server_as() {
         scriptName=ntrapy
     fi
 
-    if [ $USE_PACKAGES ]; then
+    if [ "$USE_PACKAGES" == "true" ]; then
         scriptName="roush-server-packaged"
     fi
 
