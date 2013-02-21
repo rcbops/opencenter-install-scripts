@@ -47,6 +47,11 @@ curl https://raw.github.com/creationix/nvm/master/install.sh | sh
 nvm install ${nvmVersion}
 nvm alias default ${nvmVersion}
 
+cat > /root/.ssh/config <<EOF
+Host *github.com
+    StrictHostKeyChecking no
+EOF
+
 do_git_update ntrapy
 
 pushd ntrapy

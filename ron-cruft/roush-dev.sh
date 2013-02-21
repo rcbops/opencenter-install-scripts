@@ -45,6 +45,7 @@ fi
 
 if [ $# -ge 3 ]; then
     if [ "$3" == "--packages" ]; then
+        echo "Using Packages"
         USE_PACKAGES=true
         NTRAPY_PORT=80
     else
@@ -154,7 +155,7 @@ function setup_server_as() {
     as=$2
     ip=$(ip_for "roush-server")
 
-    if [[ ! -f ${HOME}/.ssh/id_github ]] && [ ! $USE_PACKAGES ]; then
+    if [[ ! -f ${HOME}/.ssh/id_github ]]; then
         echo "Please setup your github key in ${HOME}/.ssh/id_github"
         exit 1
     fi
@@ -164,20 +165,19 @@ function setup_server_as() {
         scriptName=ntrapy
     fi
 
-    if [ "$USE_PACKAGES" == "true" ]; then
+    if [ $USE_PACKAGES ]; then
         scriptName="install-server"
         BASEDIR="$BASEDIR/../"
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
-    if [ "$USE_PACKAGES" == "false" ]; then
-        scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
-    fi
+    echo "Loading github key"
+    scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
 
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
-    if [ "$USE_PACKAGES" == "false" ]; then
-        ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
-    fi
+    echo "removing github key"
+    ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
+
 }
 
 instance_exists(){
@@ -247,8 +247,6 @@ for svr in ${nodes[@]}; do
     PIDS["$!"]=${svr}
 done
 
-fail=0
-
 for pid in ${!PIDS[@]}; do
     echo "Waiting on pid ${pid}: ${PIDS[${pid}]}"
     if [ ${pid} -ne 0 ]; then
@@ -256,7 +254,6 @@ for pid in ${!PIDS[@]}; do
         echo "Reaped ${pid}"
         if [ $? -ne 0 ]; then
             echo "Error setting up ${PIDS[${pid}]}"
-            fail=1
         fi
     fi
 done
