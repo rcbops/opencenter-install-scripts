@@ -165,14 +165,14 @@ function setup_server_as() {
     fi
 
     if [ "$USE_PACKAGES" == "true" ]; then
-        scriptName="roush-server-packaged"
+        scriptName="install-server"
+        BASEDIR="$BASEDIR/../"
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
     if [ ! $USE_PACKAGES ]; then
         scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     fi
-    scp ${SSHOPTS} ${BASEDIR}/known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
 
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
     if [ ! $USE_PACKAGES ]; then

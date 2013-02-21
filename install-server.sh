@@ -17,6 +17,27 @@
 # set -x
 set -e
 
+ROLE="server"
+SERVER_IP="0.0.0.0"
+SERVER_PORT="8080"
+
+if [ $# -ge 1 ]; then
+    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "ntrapy" ]; then
+        echo "Invalid Role specified - Defaulting to 'server' Role"
+        echo "Usage: ./install-server.sh {server | client | ntrapy} <Server-IP>"
+    else
+        ROLE=$1
+    fi
+    if [ $# -ge 2 ]; then
+        if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
+            SERVER_IP=$2
+        else
+            echo "Invalid IP specified - Defaulting to 0.0.0.0"
+            echo "Usage: ./install-server.sh {server | client | ntrapy} <Server-IP>"
+        fi
+    fi
+fi
+
 VERSION="1.0.0"
 
 function verify_apt_package_exists() {
@@ -83,28 +104,51 @@ function install_ubuntu() {
     exit 1
   fi
 
-  echo "Installing Roush-Server"
-  if ! ( ${aptget} install -y -q ${server_pkgs} ); then
-    echo "Failed to install roush"
-    exit 1
+  if [ "${ROLE}" == "server" ]; then
+      echo "Installing Roush-Server"
+      if ! ( ${aptget} install -y -q ${server_pkgs} ); then
+          echo "Failed to install roush"
+          exit 1
+      fi
   fi
 
-  echo "Installing Roush-Agent"
-  if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
-    echo "Failed to install roush-agent"
-    exit 1
+  if [ "${ROLE}" != "ntrapy" ]; then
+      echo "Installing Roush-Agent"
+      if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+          echo "Failed to install roush-agent"
+          exit 1
+      fi
+
+      echo ""
+      echo "Installing Agent Plugins"
+      if ! ( ${aptget} install -y -q ${agent_plugins} ); then
+          echo "Failed to install roush-agent"
+          exit 1
+      fi
   fi
 
-  echo ""
-  echo "Installing Agent Plugins"
-  if ! ( ${aptget} install -y -q ${agent_plugins} ); then
-    echo "Failed to install roush-agent"
-    exit 1
+  if [ "${ROLE}" == "ntrapy" ]; then
+      ${aptget} install -y -q debconf-utils
+      echo "Installing Opencentre (thats right centRE) dashboard (nTrapy)"
+      cat << EOF | debconf-set-selections
+opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
+opencenter-dashboard    opencenter/server_ip    string ${SERVER_IP}
+EOF
+      if ! ( ${aptget} install -y -q ${ntrapy_pkgs} ); then
+          echo "Failed to install Opencentre Dashboard"
+          exit 1
+      fi
   fi
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+  pkg_list=( ${agent_pkgs} ${agent_plugins} )
+  if [ "${ROLE}" == "server" ]; then
+      pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+  fi
+  if [ "${ROLE}" == "ntrapy" ]; then
+      pkg_list=( ${ntrapy_pkgs} )
+  fi
   for x in ${pkg_list[@]}; do
     if ! verify_apt_package_exists ${x};
     then
@@ -114,11 +158,13 @@ function install_ubuntu() {
     fi
   done
 
-  ROUSH_SERVER=${ROUSH_SERVER:-0.0.0.0}
-  if ! [[ -z $ROUSH_SERVER ]];then
-    # FIXME(shep): This should really be debconf hackery instead
-    sed -i "s/127.0.0.1/${ROUSH_SERVER}/" /etc/roush/agent.conf.d/roush-agent-endpoints.conf
-    /etc/init.d/roush-agent restart
+  # FIXME(shep): This should really be debconf hackery instead
+  if [ "${ROLE}" == "client" ];then
+      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/roush/agent.conf.d/roush-agent-endpoints.conf
+      /etc/init.d/roush-agent restart
+  elif [ "${ROLE}" == "server" ]; then
+      sed -i "s/127.0.0.1/0.0.0.0/" /etc/roush/agent.conf.d/roush-agent-endpoints.conf
+      /etc/init.d/roush-agent restart
   fi
 }
 
@@ -163,6 +209,7 @@ pkg_path="/proposed-packages"
 server_pkgs="roush-simple python-roush roush-client"
 agent_pkgs="roush-agent"
 agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service roush-agent-output-adventurator roush-agent-output-packages"
+ntrapy_pkgs="opencenter-dashboard"
 ####################
 
 ####################
@@ -221,3 +268,4 @@ esac
 
 echo ""
 echo "You have installed Roush. WooHoo!!"
+exit
