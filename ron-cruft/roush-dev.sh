@@ -170,12 +170,12 @@ function setup_server_as() {
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
-    if [ ! $USE_PACKAGES ]; then
+    if [ "$USE_PACKAGES" == "false" ]; then
         scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     fi
 
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
-    if [ ! $USE_PACKAGES ]; then
+    if [ "$USE_PACKAGES" == "false" ]; then
         ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
     fi
 }
