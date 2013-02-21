@@ -154,7 +154,7 @@ VERBOSE=
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
 agent_pkgs="roush-agent"
-agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service roush-agent-output-packages"
+agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service roush-agent-output-packages roush-agent-output-openstack"
 ####################
 
 ####################
