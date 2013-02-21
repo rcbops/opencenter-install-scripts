@@ -37,7 +37,6 @@ cat > /etc/apt/sources.list.d/rcb-utils.list <<EOF
 deb http://build.monkeypuppetlabs.com/proposed-packages precise rcb-utils
 EOF
 
-
 apt-get update
 apt-get -y upgrade
 
@@ -62,6 +61,11 @@ vbell off
 startup_message off
 EOF
 
+cat > /root/.ssh/config <<EOF
+Host *github.com
+    StrictHostKeyChecking no
+EOF
+
 function do_git_update() {
     repo=$1
 
@@ -74,8 +78,6 @@ function do_git_update() {
         git clone git@github.com:rcbops/${repo}
     fi
 }
-
-
 
 do_git_update roush
 do_git_update roush-agent
