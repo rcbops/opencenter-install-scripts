@@ -154,7 +154,7 @@ function setup_server_as() {
     as=$2
     ip=$(ip_for "roush-server")
 
-    if [[ ! -f ${HOME}/.ssh/id_github ]]; then
+    if [[ ! -f ${HOME}/.ssh/id_github ]] && [ ! $USE_PACKAGES ]; then
         echo "Please setup your github key in ${HOME}/.ssh/id_github"
         exit 1
     fi
@@ -169,11 +169,15 @@ function setup_server_as() {
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
-    scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
+    if [ ! $USE_PACKAGES ]; then
+        scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
+    fi
     scp ${SSHOPTS} ${BASEDIR}/known_hosts root@$(ip_for ${server}):/root/.ssh/known_hosts
 
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
-    ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
+    if [ ! $USE_PACKAGES ]; then
+        ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
+    fi
 }
 
 instance_exists(){
@@ -191,8 +195,6 @@ then
         exit 1
     fi
 fi
-
-
 
 imagelist=$($NOVA image-list)
 flavorlist=$($NOVA flavor-list)
