@@ -165,18 +165,22 @@ function setup_server_as() {
         scriptName=ntrapy
     fi
 
-    if [ "$USE_PACKAGES" == "true" ]; then
+    if ( $USE_PACKAGES ); then
         scriptName="install-server"
         BASEDIR="$BASEDIR/../"
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
-    echo "Loading github key"
-    scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
+    if !( $USE_PACKAGES ); then
+        echo "Loading github key"
+        scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
+    fi
 
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
-    echo "removing github key"
-    ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
+    if !( $USE_PACKAGES ); then
+        echo "removing github key"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
+    fi
 
 }
 
