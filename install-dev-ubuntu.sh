@@ -24,30 +24,30 @@
 apt-get install -y git python-setuptools python-cliapp gcc python-dev libevent-dev screen
 
 # or use the ssh links if you have your keys on said box
-git clone https://github.com/rcbops/roush.git
-git clone https://github.com/rcbops/roush-agent.git
-git clone https://github.com/rcbops/roush-client.git
+git clone https://github.com/rcbops/opencenter.git
+git clone https://github.com/rcbops/opencenter-agent.git
+git clone https://github.com/rcbops/opencenter-client.git
 
-# setup roush
-cd roush
+# setup opencenter
+cd opencenter
 ./run_tests.sh -V # say yes to the venv
-mkdir -p /etc/roush
-cp roush.conf /etc/roush/roush.conf
-echo 'database_uri = sqlite:////etc/roush/roush.db' >>/etc/roush/roush.conf
-screen -d -m tools/with_venv.sh python roush.py  -v -c /etc/roush/roush.conf
+mkdir -p /etc/opencenter
+cp opencenter.conf /etc/opencenter/opencenter.conf
+echo 'database_uri = sqlite:////etc/opencenter/opencenter.db' >>/etc/opencenter/opencenter.conf
+screen -d -m tools/with_venv.sh python opencenter.py  -v -c /etc/opencenter/opencenter.conf
 cd ..
 
-# setup roush-agent
-cd roush-agent
-cp roush-agent.conf.sample roush-agent.conf
+# setup opencenter-agent
+cd opencenter-agent
+cp opencenter-agent.conf.sample opencenter-agent.conf
 ./run_tests.sh # say yes
 source .venv/bin/activate
-cd ../roush-client
+cd ../opencenter-client
 python setup.py install
-cd ../roush
+cd ../opencenter
 python setup.py install
-cd ../roush-agent
+cd ../opencenter-agent
 # Get python-apt into venv for the 'packages' plugin
 cp -a /usr/share/pyshared/python_apt-0.8.3ubuntu7.egg-info /usr/share/pyshared/apt* .venv/lib/python2.7/site-packages/
-cp /usr/lib/pyshared/python2.7/apt_pkg.so ~/roush-agent/.venv/lib/python2.7/
-python roush-agent.py -c roush-agent.conf -v
+cp /usr/lib/pyshared/python2.7/apt_pkg.so ~/opencenter-agent/.venv/lib/python2.7/
+python opencenter-agent.py -c opencenter-agent.conf -v

@@ -58,5 +58,5 @@ pushd opencenter-dashboard
 sed "s/127.0.0.1/${2}/g" config.json.sample > config.json
 
 make
-bash opencenter-dashboard
+bash dashboard
 popd
