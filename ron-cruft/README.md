@@ -61,3 +61,28 @@ roush-dev.sh with the same prefix as used initially.
     export RERUN=true
     ./roush-dev.sh <Cluster-Name>
 
+Creating DNS records
+--------------------
+
+    ./syncdns.py <cloud dns domain> <path to pyrax config file> <roush cluster prefix>
+
+The DNS names execlude the cluster prefixes so that they stay consistent when you build a new cluster.
+
+For example:
+
+    (default27)MK63HADV33:ron-cruft hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
+    uk.rs.wherenow.org
+      ntrapy.uk.rs.wherenow.org A 95.138.169.97
+      roush-client2.uk.rs.wherenow.org A 95.138.170.102
+      roush-client1.uk.rs.wherenow.org A 95.138.169.61
+      roush-server.uk.rs.wherenow.org A 95.138.169.55
+
+[Pyrax](https://github.com/rackspace/pyrax/blob/master/docs/pyrax_doc.md) config file example:
+
+    [settings]
+    identity_type = rackspace
+    region = LON
+
+    [rackspace_cloud]
+    username = <your username>
+    api_key = <your api key>
