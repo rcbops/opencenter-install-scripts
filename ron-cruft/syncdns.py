@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 """
-Update a DNS domain to match a roush-dev cluster.
+Update a DNS domain to match a opencenter-cluster cluster.
 """
 
 import sys
@@ -74,7 +74,7 @@ class DNSManager(object):
         self.add(name, ip)
 
 
-class RoushCluster(object):
+class OpencenterCluster(object):
     def __init__(self, prefix_addition, prefix, dnsmanager, cloudservers):
         self.prefix = prefix
         self.prefix_addition = prefix_addition
@@ -111,7 +111,7 @@ if __name__ == "__main__":
                         help="Path to pyrax credentials file"
                              " - https://github.com/rackspace/pyrax")
     parser.add_argument('prefix',
-                        help="roush-dev prefix")
+                        help="opencenter-cluster prefix")
 
     args = parser.parse_args(sys.argv[1:])
 
@@ -124,7 +124,7 @@ if __name__ == "__main__":
         raise Quit("Failed to authenticate: %s" % e)
 
     #syncdns print and quit if the syncdns option was specified
-    cluster = RoushCluster('',
+    cluster = OpencenterCluster('',
                            args.prefix,
                            dnsmanager,
                            cs)

@@ -1,16 +1,16 @@
-Dev Roush - Roush Cluster Setup
+Opencenter Cluster Install
 -----------------------
 
-This will setup a cluster containing a Roush Server, 2 Roush Clients and a nTrapy server.
+This will setup a cluster containing an Opencenter Server, 2 Opencenter Clients and a nTrapy server.
 
-Installing Roush Cluster
+Installing Opencenter Cluster
 -----------------------
 
-    ./roush-dev.sh <Cluster-Name> <Number of Clients> {--packages}
+    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> {--packages}
 
 * Number of Clients defaults to 2 if left unspecified
-* If you are using Roush-client locally you can set your endpoint:
-export ROUSH_ENDPOINT=http://<ip of server>:8080
+* If you are using opencenter-client locally you can set your endpoint:
+export OPENCENTER_ENDPOINT=http://<ip of server>:8080
 * --packages will install from packages instead of github repos, not for Dev work.
 
 Prerequisities
@@ -37,15 +37,15 @@ This will remove all cloud servers in the cluster and delete the specific logs i
 Pushing updates to the Cluster
 -----------------------
 
-From within "roush", "roush-agent", "roush-client", "ntrapy" directories on your local laptop/desktop
+From within "opencenter", "opencenter-agent", "opencenter-client", "ntrapy" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
     ./push.sh <Cluster-Name> <repo> <repo path>
-    <repo> defaults to "roush-all" which will include roush/roush-agent/roush-client
-    <repo> possible options: {roush-all | roush | roush-client | roush-agent | ntrapy}
+    <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
+    <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | ntrapy}
     <repo path> can be left blank if you are within one of the directories, otherwise specify the path
 
-Tailing Task Logs on Roush servers:
+Tailing Task Logs on Opencenter servers:
 -----------------------
 
 This should show the last 1K of the task logs, updating every 10 seconds.
@@ -56,15 +56,15 @@ Rerunning Setup Script on the 4 nodes.
 
 If something failed during the setup of the node and you want to re-run the setup
 script without waiting for new instances to spin up, then set RERUN=true before running
-roush-dev.sh with the same prefix as used initially.
+opencenter-cluster.sh with the same prefix as used initially.
 
     export RERUN=true
-    ./roush-dev.sh <Cluster-Name>
+    ./opencenter-cluster.sh <Cluster-Name>
 
 Creating DNS records
 --------------------
 
-    ./syncdns.py <cloud dns domain> <path to pyrax config file> <roush cluster prefix>
+    ./syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
 
 The DNS names execlude the cluster prefixes so that they stay consistent when you build a new cluster.
 
@@ -73,9 +73,9 @@ For example:
     (default27)MK63HADV33:ron-cruft hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
     uk.rs.wherenow.org
       ntrapy.uk.rs.wherenow.org A 95.138.169.97
-      roush-client2.uk.rs.wherenow.org A 95.138.170.102
-      roush-client1.uk.rs.wherenow.org A 95.138.169.61
-      roush-server.uk.rs.wherenow.org A 95.138.169.55
+      opencenter-client2.uk.rs.wherenow.org A 95.138.170.102
+      opencenter-client1.uk.rs.wherenow.org A 95.138.169.61
+      opencenter-server.uk.rs.wherenow.org A 95.138.169.55
 
 [Pyrax](https://github.com/rackspace/pyrax/blob/master/docs/pyrax_doc.md) config file example:
 

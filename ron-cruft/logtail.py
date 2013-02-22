@@ -68,7 +68,7 @@ def dump_info(endpoint, task_id):
     fd.close()
 
 
-endpoint = os.environ.get('ROUSH_ENDPOINT', 'http://localhost:8080')
+endpoint = os.environ.get('OPENCENTER_ENDPOINT', 'http://localhost:8080')
 if len(sys.argv) < 2:
     print "first argument is task to watch"
     sys.exit(1)
