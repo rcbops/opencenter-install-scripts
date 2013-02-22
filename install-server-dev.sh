@@ -30,7 +30,9 @@ if [ $# -ge 1 ]; then
     fi
     if [ $# -ge 2 ]; then
         if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
-            SERVER_IP=$2
+            if [ $ROLE != "server" ]; then
+                SERVER_IP=$2
+            fi
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
             echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
@@ -170,7 +172,6 @@ EOF
       popd
 
       if [ "${ROLE}" == "server" ]; then
-          $SERVER_IP=0.0.0.0
           pushd opencenter
           cat > local.conf <<EOF
 [main]
