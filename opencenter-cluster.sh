@@ -161,7 +161,7 @@ function setup_server_as() {
         exit 1
     fi
 
-    scriptName=install-server-dev.sh
+    scriptName=install-server-dev
     if [ "$1" == "dashboard" ]; then
         scriptName=opencenter-dashboard
     fi
