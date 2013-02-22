@@ -52,13 +52,13 @@ Host *github.com
     StrictHostKeyChecking no
 EOF
 
-do_git_update ntrapy
+do_git_update opencenter-dashboard
 
-pushd ntrapy
+pushd opencenter-dashboard
 cat > config.json <<EOF
 {
   "allowedKeys": ["allowedKeys", "timeout", "throttle"],
-  "roush_url": "http://${2}:8080",
+  "opencenter_url": "http://${2}:8080",
   "timeout": {
     "short": 2000,
     "long": 30000
@@ -68,5 +68,5 @@ cat > config.json <<EOF
 EOF
 
 make
-bash ntrapy
+bash opencenter-dashboard
 popd

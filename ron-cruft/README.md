@@ -1,7 +1,7 @@
 Opencenter Cluster Install
 -----------------------
 
-This will setup a cluster containing an Opencenter Server, 2 Opencenter Clients and a nTrapy server.
+This will setup a cluster containing an Opencenter Server, 2 Opencenter Clients and an Opencenter Dashboard server.
 
 Installing Opencenter Cluster
 -----------------------
@@ -37,12 +37,12 @@ This will remove all cloud servers in the cluster and delete the specific logs i
 Pushing updates to the Cluster
 -----------------------
 
-From within "opencenter", "opencenter-agent", "opencenter-client", "ntrapy" directories on your local laptop/desktop
+From within "opencenter", "opencenter-agent", "opencenter-client", "opencenter-dashboard" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
     ./push.sh <Cluster-Name> <repo> <repo path>
     <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
-    <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | ntrapy}
+    <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}
     <repo path> can be left blank if you are within one of the directories, otherwise specify the path
 
 Tailing Task Logs on Opencenter servers:
@@ -72,7 +72,7 @@ For example:
 
     (default27)MK63HADV33:ron-cruft hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
     uk.rs.wherenow.org
-      ntrapy.uk.rs.wherenow.org A 95.138.169.97
+      opencenter-dashboard.uk.rs.wherenow.org A 95.138.169.97
       opencenter-client2.uk.rs.wherenow.org A 95.138.170.102
       opencenter-client1.uk.rs.wherenow.org A 95.138.169.61
       opencenter-server.uk.rs.wherenow.org A 95.138.169.55
