@@ -161,10 +161,10 @@ function setup_server_as() {
         exit 1
     fi
 
-    scriptName="install-server-dev"
+    scriptName="install-dev"
 
     if ( $USE_PACKAGES ); then
-        scriptName="install-server"
+        scriptName="install"
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
