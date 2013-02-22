@@ -162,9 +162,6 @@ function setup_server_as() {
     fi
 
     scriptName="install-server-dev"
-    if [ "$1" == "dashboard" ]; then
-        scriptName="opencenter-dashboard"
-    fi
 
     if ( $USE_PACKAGES ); then
         scriptName="install-server"
