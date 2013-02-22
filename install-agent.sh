@@ -36,11 +36,11 @@ function verify_apt_package_exists() {
 }
 
 
-function install_roush_apt_repo() {
+function install_opencenter_apt_repo() {
   local aptkey=$(which apt-key)
   local keyserver="keyserver.ubuntu.com"
 
-  echo "Adding Roush apt repository"
+  echo "Adding Opencenter apt repository"
 
   if [ -e ${apt_file_path} ];
   then
@@ -67,7 +67,7 @@ function install_ubuntu() {
   local aptget=$(which apt-get)
 
   # Install apt repo
-  install_roush_apt_repo
+  install_opencenter_apt_repo
 
   # Run an apt-get update to make sure sources are up to date
   echo "Refreshing package list"
@@ -83,16 +83,16 @@ function install_ubuntu() {
     exit 1
   fi
 
-  echo "Installing Roush-Agent"
+  echo "Installing Opencenter-Agent"
   if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
-    echo "Failed to install roush-agent"
+    echo "Failed to install opencenter-agent"
     exit 1
   fi
 
   echo ""
   echo "Installing Agent Plugins"
   if ! ( ${aptget} install -y -q ${agent_plugins} ); then
-    echo "Failed to install roush-agent"
+    echo "Failed to install opencenter-agent"
     exit 1
   fi
 
@@ -108,10 +108,10 @@ function install_ubuntu() {
     fi
   done
 
-  if ! [[ -z $ROUSH_SERVER ]];then
+  if ! [[ -z $OPENCENTER_SERVER ]];then
     # FIXME(shep): This should really be debconf hackery instead
-    sed -i "s/127.0.0.1/${ROUSH_SERVER}/" /etc/roush/agent.conf.d/roush-agent-endpoints.conf
-    /etc/init.d/roush-agent restart
+    sed -i "s/127.0.0.1/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+    /etc/init.d/opencenter-agent restart
   fi
 }
 
@@ -124,7 +124,7 @@ function usage() {
 cat <<EOF
 usage: $0 options
 
-This script will install a roush agent.
+This script will install a opencenter agent.
 
 OPTIONS:
   -h  Show this message
@@ -153,8 +153,8 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-agent_pkgs="roush-agent"
-agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service roush-agent-output-packages roush-agent-output-openstack"
+agent_pkgs="opencenter-agent"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-packages opencenter-agent-output-openstack"
 ####################
 
 ####################
@@ -212,4 +212,4 @@ case $platform in
 esac
 
 echo ""
-echo "You have installed a Roush-Agent. Go forth and prosper!!"
+echo "You have installed a Opencenter-Agent. Go forth and prosper!!"

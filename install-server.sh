@@ -22,9 +22,9 @@ SERVER_IP="0.0.0.0"
 SERVER_PORT="8080"
 
 if [ $# -ge 1 ]; then
-    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "ntrapy" ]; then
+    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | client | ntrapy} <Server-IP>"
+        echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
     else
         ROLE=$1
     fi
@@ -33,7 +33,7 @@ if [ $# -ge 1 ]; then
             SERVER_IP=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | client | ntrapy} <Server-IP>"
+            echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
         fi
     fi
 fi
@@ -57,11 +57,11 @@ function verify_apt_package_exists() {
 }
 
 
-function install_roush_apt_repo() {
+function install_opencenter_apt_repo() {
   local aptkey=$(which apt-key)
   local keyserver="keyserver.ubuntu.com"
 
-  echo "Adding Roush apt repository"
+  echo "Adding Opencenter apt repository"
 
   if [ -e ${apt_file_path} ];
   then
@@ -88,7 +88,7 @@ function install_ubuntu() {
   local aptget=$(which apt-get)
 
   # Install apt repo
-  install_roush_apt_repo
+  install_opencenter_apt_repo
 
   # Run an apt-get update to make sure sources are up to date
   echo "Refreshing package list"
@@ -105,36 +105,36 @@ function install_ubuntu() {
   fi
 
   if [ "${ROLE}" == "server" ]; then
-      echo "Installing Roush-Server"
+      echo "Installing Opencenter-Server"
       if ! ( ${aptget} install -y -q ${server_pkgs} ); then
-          echo "Failed to install roush"
+          echo "Failed to install opencenter"
           exit 1
       fi
   fi
 
-  if [ "${ROLE}" != "ntrapy" ]; then
-      echo "Installing Roush-Agent"
+  if [ "${ROLE}" != "dashboard" ]; then
+      echo "Installing Opencenter-Agent"
       if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
-          echo "Failed to install roush-agent"
+          echo "Failed to install opencenter-agent"
           exit 1
       fi
 
       echo ""
       echo "Installing Agent Plugins"
       if ! ( ${aptget} install -y -q ${agent_plugins} ); then
-          echo "Failed to install roush-agent"
+          echo "Failed to install opencenter-agent"
           exit 1
       fi
   fi
 
-  if [ "${ROLE}" == "ntrapy" ]; then
+  if [ "${ROLE}" == "dashboard" ]; then
       ${aptget} install -y -q debconf-utils
-      echo "Installing Opencentre (thats right centRE) dashboard (nTrapy)"
+      echo "Installing Opencenter Dashboard"
       cat << EOF | debconf-set-selections
 opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
 opencenter-dashboard    opencenter/server_ip    string ${SERVER_IP}
 EOF
-      if ! ( ${aptget} install -y -q ${ntrapy_pkgs} ); then
+      if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
           echo "Failed to install Opencentre Dashboard"
           exit 1
       fi
@@ -146,8 +146,8 @@ EOF
   if [ "${ROLE}" == "server" ]; then
       pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
   fi
-  if [ "${ROLE}" == "ntrapy" ]; then
-      pkg_list=( ${ntrapy_pkgs} )
+  if [ "${ROLE}" == "dashboard" ]; then
+      pkg_list=( ${dashboard_pkgs} )
   fi
   for x in ${pkg_list[@]}; do
     if ! verify_apt_package_exists ${x};
@@ -160,11 +160,11 @@ EOF
 
   # FIXME(shep): This should really be debconf hackery instead
   if [ "${ROLE}" == "client" ];then
-      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/roush/agent.conf.d/roush-agent-endpoints.conf
-      /etc/init.d/roush-agent restart
+      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
   elif [ "${ROLE}" == "server" ]; then
-      sed -i "s/127.0.0.1/0.0.0.0/" /etc/roush/agent.conf.d/roush-agent-endpoints.conf
-      /etc/init.d/roush-agent restart
+      sed -i "s/127.0.0.1/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
   fi
 }
 
@@ -177,7 +177,7 @@ function usage() {
 cat <<EOF
 usage: $0 options
 
-This script will install roush packages.
+This script will install opencenter packages.
 
 OPTIONS:
   -h  Show this message
@@ -206,10 +206,10 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-server_pkgs="roush-simple python-roush roush-client"
-agent_pkgs="roush-agent"
-agent_plugins="roush-agent-input-task roush-agent-output-chef roush-agent-output-service roush-agent-output-adventurator roush-agent-output-packages"
-ntrapy_pkgs="opencenter-dashboard"
+server_pkgs="opencenter-simple python-opencenter opencenter-client"
+agent_pkgs="opencenter-agent"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages"
+dashboard_pkgs="opencenter-dashboard"
 ####################
 
 ####################
@@ -267,5 +267,5 @@ case $platform in
 esac
 
 echo ""
-echo "You have installed Roush. WooHoo!!"
+echo "You have installed Opencenter. WooHoo!!"
 exit
