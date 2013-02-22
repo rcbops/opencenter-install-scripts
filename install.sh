@@ -18,7 +18,7 @@
 set -e
 
 ROLE="server"
-SERVER_IP="0.0.0.0"
+SERVER_IP=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
 
 if [ $# -ge 1 ]; then
@@ -30,9 +30,7 @@ if [ $# -ge 1 ]; then
     fi
     if [ $# -ge 2 ]; then
         if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
-            if [ $ROLE != "server" ]; then
-                SERVER_IP=$2
-            fi
+            SERVER_IP=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
             echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
@@ -41,9 +39,6 @@ if [ $# -ge 1 ]; then
 fi
 
 VERSION="1.0.0"
-
-echo "INSTALLING AS ${ROLE} against server IP of ${SERVER_IP}"
-export DEBIAN_FRONTEND=noninteractive
 
 function verify_apt_package_exists() {
   # $1 - name of package to test
@@ -62,7 +57,7 @@ function verify_apt_package_exists() {
 }
 
 
-function install_apt_repo() {
+function install_opencenter_apt_repo() {
   local aptkey=$(which apt-key)
   local keyserver="keyserver.ubuntu.com"
 
@@ -89,51 +84,12 @@ function install_apt_repo() {
 }
 
 
-function ron_screen() {
-    cat > /root/.screenrc <<EOF
-hardstatus on
-hardstatus alwayslastline
-hardstatus string "%{.bW}%-w%{.rW}%n %t%{-}%+w %=%{..G} %H %{..Y} %d/%m %C%a"
-
-# fix up 256color
-attrcolor b ".I"
-termcapinfo xterm-256color 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
-
-escape '\`q'
-
-defscrollback 1024
-
-vbell off
-startup_message off
-EOF
-}
-
-
-function do_git_update() {
-    # $1 = repo name
-    repo=$1
-    if [ -d ${repo} ]; then
-        pushd ${repo}
-        git checkout master
-        git pull origin master
-        popd
-    else
-        git clone git@github.com:rcbops/${repo}
-    fi
-}
-
-
 function install_ubuntu() {
   local aptget=$(which apt-get)
 
   # Install apt repo
-  install_apt_repo
+  install_opencenter_apt_repo
 
-  if [ "${ROLE}" != "dashboard" ]; then
-      apt-get update
-      apt-get install -y python-software-properties
-      add-apt-repository -y ppa:cassou/emacs
-  fi
   # Run an apt-get update to make sure sources are up to date
   echo "Refreshing package list"
   if [[ -z $VERBOSE ]]; then
@@ -148,26 +104,48 @@ function install_ubuntu() {
     exit 1
   fi
 
-  ron_screen
+  if [ "${ROLE}" == "server" ]; then
+      echo "Installing Opencenter-Server"
+      if ! ( ${aptget} install -y -q ${server_pkgs} ); then
+          echo "Failed to install opencenter"
+          exit 1
+      fi
+  fi
 
   if [ "${ROLE}" != "dashboard" ]; then
-      echo "Installing Required Packages"
+      echo "Installing Opencenter-Agent"
       if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+
+      echo ""
+      echo "Installing Agent Plugins"
+      if ! ( ${aptget} install -y -q ${agent_plugins} ); then
           echo "Failed to install opencenter-agent"
           exit 1
       fi
   fi
 
   if [ "${ROLE}" == "dashboard" ]; then
+      ${aptget} install -y -q debconf-utils
+      echo "Installing Opencenter Dashboard"
+      cat << EOF | debconf-set-selections
+opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
+opencenter-dashboard    opencenter/server_ip    string ${SERVER_IP}
+EOF
       if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
-          echo "Failed to install Required Packages"
+          echo "Failed to install Opencentre Dashboard"
           exit 1
       fi
   fi
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${agent_pkgs} )
+  pkg_list=( ${agent_pkgs} ${agent_plugins} )
+  if [ "${ROLE}" == "server" ]; then
+      pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+  fi
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${dashboard_pkgs} )
   fi
@@ -180,57 +158,16 @@ function install_ubuntu() {
     fi
   done
 
-  cat > /root/.ssh/config <<EOF
-Host *github.com
-    StrictHostKeyChecking no
-EOF
-  if [ "${ROLE}" != "dashboard" ]; then
-      do_git_update opencenter
-      do_git_update opencenter-agent
-      do_git_update opencenter-client
-
-      pushd opencenter-client
-      sudo python ./setup.py install
-      popd
-
-      if [ "${ROLE}" == "server" ]; then
-          pushd opencenter
-          cat > local.conf <<EOF
-[main]
-bind_address = 0.0.0.0
-bind_port = 8080
-database_uri = sqlite:///opencenter.db
-[logging]
-opencenter.webapp.ast=INFO
-opencenter.webapp.db=INFO
-opencenter.webapp.solver=DEBUG
-EOF
-          screen -S opencenter-server -d -m python ./opencenter.py  -v -c ./local.conf
-          popd
-      fi
-      pushd opencenter-agent
-      sed "s/127.0.0.1/${SERVER_IP}/g" opencenter-agent.conf.sample > local.conf
-      sed "s/NOTSET/DEBUG/g" log.cfg > local-log.cfg
-      PYTHONPATH=../opencenter screen -S opencenter-agent -d -m python ./opencenter-agent.py -v -c ./local.conf
-      popd
-  fi
-
-  if [ "${ROLE}" == "dashboard" ]; then
-      nvmVersion=0.8.18
-      rm -rf .nvm .bower .anvil* .npm
-      curl https://raw.github.com/creationix/nvm/master/install.sh | sh
-      . ~/.nvm/nvm.sh
-      nvm install ${nvmVersion}
-      nvm alias default ${nvmVersion}
-
-      do_git_update opencenter-dashboard
-      pushd opencenter-dashboard
-      sed "s/127.0.0.1/${SERVER_IP}/g" config.json.sample > config.json
-      make
-      bash dashboard
-      popd
+  # FIXME(shep): This should really be debconf hackery instead
+  if [ "${ROLE}" == "client" ];then
+      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
+  elif [ "${ROLE}" == "server" ]; then
+      sed -i "s/127.0.0.1/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
   fi
 }
+
 
 function install_rhel() {
   echo "Installing on RHEL"
@@ -269,8 +206,10 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-agent_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
-dashboard_pkgs="build-essential git"
+server_pkgs="opencenter-simple python-opencenter opencenter-client"
+agent_pkgs="opencenter-agent"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages"
+dashboard_pkgs="opencenter-dashboard"
 ####################
 
 ####################
