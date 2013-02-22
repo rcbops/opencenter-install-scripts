@@ -55,18 +55,8 @@ EOF
 do_git_update opencenter-dashboard
 
 pushd opencenter-dashboard
-cat > config.json <<EOF
-{
-  "allowedKeys": ["allowedKeys", "timeout", "throttle"],
-  "opencenter_url": "http://${2}:8080",
-  "timeout": {
-    "short": 2000,
-    "long": 30000
-  },
-  "throttle": 500
-}
-EOF
+sed "s/127.0.0.1/${2}/g" config.json.sample > config.json
 
 make
-bash opencenter-dashboard
+bash dashboard
 popd
