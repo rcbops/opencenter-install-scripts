@@ -97,6 +97,7 @@ function repo_push() {
 function push_roush_agent() {
     if [ ! -d ${REPO_PATH}roush-agent ] || [ ! -d ${REPO_PATH}roush ]; then
         echo "Not sitting in top level roush dir or roush-agent/roush directory doesnt exist"
+        echo $PWD
         exit 1
     fi
 

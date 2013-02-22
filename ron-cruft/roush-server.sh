@@ -53,7 +53,6 @@ hardstatus string "%{.bW}%-w%{.rW}%n %t%{-}%+w %=%{..G} %H %{..Y} %d/%m %C%a"
 attrcolor b ".I"
 termcapinfo xterm-256color 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
 
-escape '\`q'
 
 defscrollback 1024
 
@@ -69,14 +68,21 @@ EOF
 function do_git_update() {
     repo=$1
 
-    if [ -d ${repo} ]; then
-        pushd ${repo}
-        git checkout master
-        git pull origin master
-        popd
-    else
-        git clone git@github.com:rcbops/${repo}
+    if [ ! -d ${repo} ]; then
+        git clone git@github.com:mancdaz/${repo}
     fi
+
+   # git checkout master
+   #git pull origin master
+   branch="master"
+   if [ ${repo} = "roush" ] ; then
+       branch="converge"
+   fi
+
+   pushd ${repo}
+   git checkout ${branch}
+   git pull origin ${branch}
+   popd
 }
 
 do_git_update roush
@@ -94,9 +100,11 @@ if [ "$1" == "server" ]; then
 bind_address = 0.0.0.0
 bind_port = 8080
 database_uri = sqlite:///roush.db
+logfile=/var/log/roush.log
+loglevel=DEBUG
 [logging]
-roush.webapp.ast=INFO
-roush.webapp.db=INFO
+roush.webapp.ast=DEBUG
+roush.webapp.db=DEBUG
 roush.webapp.solver=DEBUG
 EOF
     screen -S roush-server -d -m python ./roush.py  -v -c ./local.conf
