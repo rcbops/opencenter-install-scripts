@@ -34,10 +34,11 @@ Installing individual servers
     curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install-server.sh" | bash -s {server | client | dashboard} <SERVER IP>
     Defaults to {server} 0.0.0.0
 
+* NB This doesn't have the same pre-requisites
 Wiping the Cluster
 -----------------------
 
-    ./wipe.sh <Cluster-Name>
+    ./ron-cruft/wipe.sh <Cluster-Name>
 
 This will remove all cloud servers in the cluster and delete the specific logs in /tmp
 
@@ -47,7 +48,7 @@ Pushing updates to the Cluster
 From within "opencenter", "opencenter-agent", "opencenter-client", "opencenter-dashboard" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./push.sh <Cluster-Name> <repo> <repo path>
+    ./ron-cruft/push.sh <Cluster-Name> <repo> <repo path>
     <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
     <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}
     <repo path> can be left blank if you are within one of the directories, otherwise specify the path
@@ -56,7 +57,7 @@ Tailing Task Logs on Opencenter servers:
 -----------------------
 
 This should show the last 1K of the task logs, updating every 10 seconds.
-    ./logtail.py <task_id>
+    ./ron-cruft/logtail.py <task_id>
 
 Rerunning Setup Script on the 4 nodes.
 -----------------------
@@ -71,7 +72,7 @@ opencenter-cluster.sh with the same prefix as used initially.
 Creating DNS records
 --------------------
 
-    ./syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
+    ./ron-cruft/syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
 
 The DNS names execlude the cluster prefixes so that they stay consistent when you build a new cluster.
 
