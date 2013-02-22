@@ -203,7 +203,7 @@ EOF
 
       do_git_update opencenter-dashboard
       pushd opencenter-dashboard
-      sed "s/127.0.0.1/${2}/g" config.json.sample > config.json
+      sed "s/127.0.0.1/${SERVER_IP}/g" config.json.sample > config.json
       make
       bash dashboard
       popd
