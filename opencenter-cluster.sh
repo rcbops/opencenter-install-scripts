@@ -161,9 +161,9 @@ function setup_server_as() {
         exit 1
     fi
 
-    scriptName=install-server-dev
+    scriptName="install-server-dev"
     if [ "$1" == "dashboard" ]; then
-        scriptName=opencenter-dashboard
+        scriptName="opencenter-dashboard"
     fi
 
     if ( $USE_PACKAGES ); then
