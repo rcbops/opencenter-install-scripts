@@ -161,14 +161,10 @@ function setup_server_as() {
         exit 1
     fi
 
-    scriptName=opencenter-install
-    if [ "$1" == "dashboard" ]; then
-        scriptName=opencenter-dashboard
-    fi
+    scriptName="install-server-dev"
 
     if ( $USE_PACKAGES ); then
         scriptName="install-server"
-        BASEDIR="$BASEDIR/../"
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
