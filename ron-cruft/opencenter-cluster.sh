@@ -162,7 +162,7 @@ function setup_server_as() {
     fi
 
     scriptName=opencenter-install
-    if [ "$1" == "opencenter-dashboard" ]; then
+    if [ "$1" == "dashboard" ]; then
         scriptName=opencenter-dashboard
     fi
 
@@ -244,7 +244,7 @@ for svr in ${nodes[@]}; do
     fi
 
     if [ "${svr}" == "opencenter-dashboard" ]; then
-        what=opencenter-dashboard
+        what=dashboard
     fi
 
     setup_server_as ${svr} ${what} > /tmp/$(mangle_name ${svr}).log 2>&1 &
