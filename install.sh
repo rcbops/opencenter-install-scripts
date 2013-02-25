@@ -18,7 +18,7 @@
 set -e
 
 ROLE="server"
-SERVER_IP=${OPENCENTER_SERVER:-"0.0.0.0"}
+OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
 
 if [ $# -ge 1 ]; then
@@ -30,7 +30,7 @@ if [ $# -ge 1 ]; then
     fi
     if [ $# -ge 2 ]; then
         if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
-            SERVER_IP=$2
+            OPENCENTER_SERVER=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
             echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
@@ -132,7 +132,7 @@ function install_ubuntu() {
       echo "Installing Opencenter Dashboard"
       cat << EOF | debconf-set-selections
 opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
-opencenter-dashboard    opencenter/server_ip    string ${SERVER_IP}
+opencenter-dashboard    opencenter/server_ip    string ${OPENCENTER_SERVER}
 EOF
       if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
           echo "Failed to install Opencentre Dashboard"
@@ -160,10 +160,12 @@ EOF
 
   # FIXME(shep): This should really be debconf hackery instead
   if [ "${ROLE}" == "client" ];then
-      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       /etc/init.d/opencenter-agent restart
   elif [ "${ROLE}" == "server" ]; then
-      sed -i "s/127.0.0.1/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       /etc/init.d/opencenter-agent restart
   fi
 }

@@ -18,7 +18,7 @@
 set -e
 
 ROLE="server"
-SERVER_IP=${OPENCENTER_SERVER:-"0.0.0.0"}
+OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
 
 if [ $# -ge 1 ]; then
@@ -31,7 +31,7 @@ if [ $# -ge 1 ]; then
     if [ $# -ge 2 ]; then
         if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
             if [ $ROLE != "server" ]; then
-                SERVER_IP=$2
+                OPENCENTER_SERVER=$2
             fi
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
@@ -42,7 +42,7 @@ fi
 
 VERSION="1.0.0"
 
-echo "INSTALLING AS ${ROLE} against server IP of ${SERVER_IP}"
+echo "INSTALLING AS ${ROLE} against server IP of ${OPENCENTER_SERVER}"
 export DEBIAN_FRONTEND=noninteractive
 
 function verify_apt_package_exists() {
@@ -186,7 +186,7 @@ EOF
           popd
       fi
       pushd opencenter-agent
-      sed "s/127.0.0.1/${SERVER_IP}/g" opencenter-agent.conf.sample > local.conf
+      sed "s/127.0.0.1/${OPENCENTER_SERVER}/g" opencenter-agent.conf.sample > local.conf
       sed "s/NOTSET/DEBUG/g" log.cfg > local-log.cfg
       PYTHONPATH=../opencenter screen -S opencenter-agent -d -m python ./opencenter-agent.py -v -c ./local.conf
       popd
@@ -202,7 +202,7 @@ EOF
 
       do_git_update opencenter-dashboard
       pushd opencenter-dashboard
-      sed "s/127.0.0.1/${SERVER_IP}/g" config.json.sample > config.json
+      sed "s/127.0.0.1/${OPENCENTER_SERVER}/g" config.json.sample > config.json
       make
       bash dashboard
       popd
