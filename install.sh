@@ -17,6 +17,27 @@
 # set -x
 set -e
 
+ROLE="server"
+SERVER_IP=${OPENCENTER_SERVER:-"0.0.0.0"}
+SERVER_PORT="8080"
+
+if [ $# -ge 1 ]; then
+    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "dashboard" ]; then
+        echo "Invalid Role specified - Defaulting to 'server' Role"
+        echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+    else
+        ROLE=$1
+    fi
+    if [ $# -ge 2 ]; then
+        if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
+            SERVER_IP=$2
+        else
+            echo "Invalid IP specified - Defaulting to 0.0.0.0"
+            echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+        fi
+    fi
+fi
+
 VERSION="1.0.0"
 
 function verify_apt_package_exists() {
@@ -83,22 +104,51 @@ function install_ubuntu() {
     exit 1
   fi
 
-  echo "Installing Opencenter-Agent"
-  if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
-    echo "Failed to install opencenter-agent"
-    exit 1
+  if [ "${ROLE}" == "server" ]; then
+      echo "Installing Opencenter-Server"
+      if ! ( ${aptget} install -y -q ${server_pkgs} ); then
+          echo "Failed to install opencenter"
+          exit 1
+      fi
   fi
 
-  echo ""
-  echo "Installing Agent Plugins"
-  if ! ( ${aptget} install -y -q ${agent_plugins} ); then
-    echo "Failed to install opencenter-agent"
-    exit 1
+  if [ "${ROLE}" != "dashboard" ]; then
+      echo "Installing Opencenter-Agent"
+      if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+
+      echo ""
+      echo "Installing Agent Plugins"
+      if ! ( ${aptget} install -y -q ${agent_plugins} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+  fi
+
+  if [ "${ROLE}" == "dashboard" ]; then
+      ${aptget} install -y -q debconf-utils
+      echo "Installing Opencenter Dashboard"
+      cat << EOF | debconf-set-selections
+opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
+opencenter-dashboard    opencenter/server_ip    string ${SERVER_IP}
+EOF
+      if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
+          echo "Failed to install Opencentre Dashboard"
+          exit 1
+      fi
   fi
 
   echo ""
   echo "Verifying packages installed successfully"
   pkg_list=( ${agent_pkgs} ${agent_plugins} )
+  if [ "${ROLE}" == "server" ]; then
+      pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+  fi
+  if [ "${ROLE}" == "dashboard" ]; then
+      pkg_list=( ${dashboard_pkgs} )
+  fi
   for x in ${pkg_list[@]}; do
     if ! verify_apt_package_exists ${x};
     then
@@ -108,10 +158,13 @@ function install_ubuntu() {
     fi
   done
 
-  if ! [[ -z $OPENCENTER_SERVER ]];then
-    # FIXME(shep): This should really be debconf hackery instead
-    sed -i "s/127.0.0.1/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-    /etc/init.d/opencenter-agent restart
+  # FIXME(shep): This should really be debconf hackery instead
+  if [ "${ROLE}" == "client" ];then
+      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
+  elif [ "${ROLE}" == "server" ]; then
+      sed -i "s/127.0.0.1/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
   fi
 }
 
@@ -124,7 +177,7 @@ function usage() {
 cat <<EOF
 usage: $0 options
 
-This script will install a opencenter agent.
+This script will install opencenter packages.
 
 OPTIONS:
   -h  Show this message
@@ -153,8 +206,10 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
+server_pkgs="opencenter-simple python-opencenter opencenter-client"
 agent_pkgs="opencenter-agent"
-agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-packages opencenter-agent-output-openstack"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack"
+dashboard_pkgs="opencenter-dashboard"
 ####################
 
 ####################
@@ -212,4 +267,5 @@ case $platform in
 esac
 
 echo ""
-echo "You have installed a Opencenter-Agent. Go forth and prosper!!"
+echo "You have installed Opencenter. WooHoo!!"
+exit

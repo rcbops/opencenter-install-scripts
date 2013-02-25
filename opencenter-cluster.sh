@@ -28,7 +28,8 @@ CLUSTER_PREFIX="c1"
 CLIENT_COUNT=2
 BASEDIR=$(dirname $0)
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-NTRAPY_PORT=3000
+DASHBOARD_PORT=3000
+USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> {--packages}"
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
@@ -38,7 +39,7 @@ if [ $# -ge 2 ]; then
     if [ $2 -eq $2 2>/dev/null ]; then
         CLIENT_COUNT=$2
     else
-        echo "Usage: roush-dev.sh <Cluster-Prefix> <Number of Clients> {--packages}"
+        echo $USAGE
         exit 1
     fi
 fi
@@ -47,9 +48,9 @@ if [ $# -ge 3 ]; then
     if [ "$3" == "--packages" ]; then
         echo "Using Packages"
         USE_PACKAGES=true
-        NTRAPY_PORT=80
+        DASHBOARD_PORT=80
     else
-        echo "Usage: roush-dev.sh <Cluster-Prefix> <Nimber of Clients> {--packages}"
+        echo $USAGE
         exit 1
     fi
 fi
@@ -153,21 +154,17 @@ function wait_for_ssh() {
 function setup_server_as() {
     server=$(mangle_name $1)
     as=$2
-    ip=$(ip_for "roush-server")
+    ip=$(ip_for "opencenter-server")
 
     if [[ ! -f ${HOME}/.ssh/id_github ]]; then
         echo "Please setup your github key in ${HOME}/.ssh/id_github"
         exit 1
     fi
 
-    scriptName=roush-server
-    if [ "$1" == "ntrapy" ]; then
-        scriptName=ntrapy
-    fi
+    scriptName="install-dev"
 
     if ( $USE_PACKAGES ); then
-        scriptName="install-server"
-        BASEDIR="$BASEDIR/../"
+        scriptName="install"
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
@@ -216,34 +213,34 @@ then
 fi
 
 if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
-    instance_exists roush-server || $NOVA boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-server) > /dev/null 2>&1
+    instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-server) > /dev/null 2>&1
     for client in $(seq 1 $CLIENT_COUNT); do
-        instance_exists roush-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name roush-client${client}) > /dev/null 2>&1
+        instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-client${client}) > /dev/null 2>&1
     done
-    instance_exists ntrapy || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name ntrapy) > /dev/null 2>&1
+    instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-dashboard) > /dev/null 2>&1
 else
     echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
     exit 1
 fi
 
-nodes=("roush-server")
-wait_for_ssh "roush-server"
+nodes=("opencenter-server")
+wait_for_ssh "opencenter-server"
 for client in $(seq 1 $CLIENT_COUNT); do
-    wait_for_ssh "roush-client${client}"
-    nodes=(${nodes[@]} "roush-client${client}")
+    wait_for_ssh "opencenter-client${client}"
+    nodes=(${nodes[@]} "opencenter-client${client}")
 done
-wait_for_ssh "ntrapy"
-nodes=(${nodes[@]} "ntrapy")
+wait_for_ssh "opencenter-dashboard"
+nodes=(${nodes[@]} "opencenter-dashboard")
 
 for svr in ${nodes[@]}; do
     what=client
 
-    if [ "${svr}" == "roush-server" ]; then
+    if [ "${svr}" == "opencenter-server" ]; then
         what=server
     fi
 
-    if [ "${svr}" == "ntrapy" ]; then
-        what=ntrapy
+    if [ "${svr}" == "opencenter-dashboard" ]; then
+        what=dashboard
     fi
 
     setup_server_as ${svr} ${what} > /tmp/$(mangle_name ${svr}).log 2>&1 &
@@ -262,8 +259,8 @@ for pid in ${!PIDS[@]}; do
     fi
 done
 
-server_ip=$(ip_for roush-server)
+server_ip=$(ip_for opencenter-server)
 echo -e "\n*** COMPLETE ***\n"
-echo -e "Run \"export ROUSH_ENDPOINT=http://${server_ip}:8080\" to use the roushcli"
-ntrapy_ip=$(ip_for ntrapy)
-echo -e "Or connect to \"http://${ntrapy_ip}:${NTRAPY_PORT}\" to manage via the ntrapy interface\n"
+echo -e "Run \"export OPENCENTER_ENDPOINT=http://${server_ip}:8080\" to use the opencentercli"
+dashboard_ip=$(ip_for opencenter-dashboard)
+echo -e "Or connect to \"http://${dashboard_ip}:${DASHBOARD_PORT}\" to manage via the opencenter-dashboard interface\n"
