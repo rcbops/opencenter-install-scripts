@@ -38,7 +38,7 @@ Installing individual servers
 Wiping the Cluster
 -----------------------
 
-    ./ron-cruft/wipe.sh <Cluster-Name>
+    ./utils/wipe.sh <Cluster-Name>
 
 This will remove all cloud servers in the cluster and delete the specific logs in /tmp
 
@@ -48,7 +48,7 @@ Pushing updates to the Cluster
 From within "opencenter", "opencenter-agent", "opencenter-client", "opencenter-dashboard" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./ron-cruft/push.sh <Cluster-Name> <repo> <repo path>
+    ./utils/push.sh <Cluster-Name> <repo> <repo path>
     <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
     <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}
     <repo path> can be left blank if you are within one of the directories, otherwise specify the path
@@ -57,7 +57,7 @@ Tailing Task Logs on Opencenter servers:
 -----------------------
 
 This should show the last 1K of the task logs, updating every 10 seconds.
-    ./ron-cruft/logtail.py <task_id>
+    ./utils/logtail.py <task_id>
 
 Rerunning Setup Script on the 4 nodes.
 -----------------------
@@ -72,13 +72,13 @@ opencenter-cluster.sh with the same prefix as used initially.
 Creating DNS records
 --------------------
 
-    ./ron-cruft/syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
+    ./utils/syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
 
 The DNS names execlude the cluster prefixes so that they stay consistent when you build a new cluster.
 
 For example:
 
-    (default27)MK63HADV33:ron-cruft hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
+    (default27)MK63HADV33:utils hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
     uk.rs.wherenow.org
       opencenter-dashboard.uk.rs.wherenow.org A 95.138.169.97
       opencenter-client2.uk.rs.wherenow.org A 95.138.170.102
