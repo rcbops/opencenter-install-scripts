@@ -31,7 +31,7 @@ Prerequisities
 Installing individual servers
 -----------------------
 
-    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install-server.sh" | bash -s {server | client | dashboard} <SERVER IP>
+    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s {server | client | dashboard} <SERVER IP>
     Defaults to {server} 0.0.0.0
 
 * NB This doesn't have the same pre-requisites
