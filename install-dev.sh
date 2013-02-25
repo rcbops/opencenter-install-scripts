@@ -88,27 +88,6 @@ function install_apt_repo() {
   fi
 }
 
-
-function ron_screen() {
-    cat > /root/.screenrc <<EOF
-hardstatus on
-hardstatus alwayslastline
-hardstatus string "%{.bW}%-w%{.rW}%n %t%{-}%+w %=%{..G} %H %{..Y} %d/%m %C%a"
-
-# fix up 256color
-attrcolor b ".I"
-termcapinfo xterm-256color 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
-
-escape '\`q'
-
-defscrollback 1024
-
-vbell off
-startup_message off
-EOF
-}
-
-
 function do_git_update() {
     # $1 = repo name
     repo=$1
@@ -147,8 +126,6 @@ function install_ubuntu() {
     echo "apt-get update failed to execute successfully."
     exit 1
   fi
-
-  ron_screen
 
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Required Packages"

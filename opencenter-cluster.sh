@@ -173,6 +173,12 @@ function setup_server_as() {
         scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     fi
 
+    # Upload screen.rc file if exists
+    if [[ -f ${HOME}/.screenrc ]]; then
+        echo "Setting up .screenrc file"
+        scp ${SSHOPTS} ${HOME}/.screenrc root@$(ip_for ${server}):/root/.screenrc
+    fi
+
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
     if !( $USE_PACKAGES ); then
         echo "removing github key"
