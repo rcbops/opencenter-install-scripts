@@ -208,7 +208,7 @@ uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
 server_pkgs="opencenter-simple python-opencenter opencenter-client"
 agent_pkgs="opencenter-agent"
-agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack"
 dashboard_pkgs="opencenter-dashboard"
 ####################
 
