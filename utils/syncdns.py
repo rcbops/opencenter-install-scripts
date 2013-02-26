@@ -15,10 +15,26 @@
 # limitations under the License.
 #
 """
-Update a DNS domain to match a opencenter-cluster cluster.
+Update a DNS domain to match a opencenter development cluster.
+This is specifically for use with opencenter-cluster.sh, the same prefix used
+in that script should also be passed to this script.
+
+The DNS entries are named after the role of each node and do not include the
+prefix. This ensures that endpoints can stay consistent while creating various
+developement clusters.
+
+Example usage:
+
+utils/syncdns.py uk.rs.wherenow.org dev2
+uk.rs.wherenow.org
+  opencenter-dashboard.uk.rs.wherenow.org A 95.138.172.27
+  opencenter-client2.uk.rs.wherenow.org A 95.138.172.143
+  opencenter-client1.uk.rs.wherenow.org A 95.138.170.92
+  opencenter-server.uk.rs.wherenow.org A 95.138.170.23
 """
 
 import sys
+import os
 import argparse
 import re
 import pyrax
@@ -107,9 +123,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('domain',
                         help="DNS domain registered with cloud DNS")
-    parser.add_argument('pyrax_cfg',
+    parser.add_argument('--pyrax_cfg',
                         help="Path to pyrax credentials file"
-                             " - https://github.com/rackspace/pyrax")
+                             " - https://github.com/rackspace/pyrax",
+                        default=os.path.expanduser("~/.pyrax.cfg"))
     parser.add_argument('prefix',
                         help="opencenter-cluster prefix")
 
