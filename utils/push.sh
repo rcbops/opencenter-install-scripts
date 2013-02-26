@@ -13,7 +13,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
+
 set -e
 
 NOVA=${NOVA:-nova}
@@ -36,7 +36,7 @@ declare -A PIDS
 declare -A IPADDRS
 
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-
+PUSHOPTS="${PUSHOPTS}"
 CLUSTER_PREFIX="c1"
 
 if [ "x$1" != "x" ]; then
@@ -93,7 +93,7 @@ function repo_push() {
     if [ "$OC_SYNC" == "rsync" ]; then
         rsync -e "ssh ${SSHOPTS}" -C -av --delete --exclude='*.conf' --exclude='*.db' . root@${ip}:/root/${repo} >&99 2>&1
     else
-        git push root@${ip}:/root/${repo} HEAD:master >&99 2>&1
+        git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:master >&99 2>&1
         ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
     fi
     popd >&99 2>&1
