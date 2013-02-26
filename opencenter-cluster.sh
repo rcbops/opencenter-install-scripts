@@ -29,7 +29,7 @@ CLIENT_COUNT=2
 BASEDIR=$(dirname $0)
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
-USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> {--packages}"
+USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages]"
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
