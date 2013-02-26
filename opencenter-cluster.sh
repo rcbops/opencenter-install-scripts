@@ -239,7 +239,7 @@ wait_for_ssh "opencenter-dashboard"
 nodes=(${nodes[@]} "opencenter-dashboard")
 
 for svr in ${nodes[@]}; do
-    what=client
+    what=agent
 
     if [ "${svr}" == "opencenter-server" ]; then
         what=server

@@ -22,9 +22,9 @@ OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
 
 if [ $# -ge 1 ]; then
-    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "dashboard" ]; then
+    if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+        echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
     else
         ROLE=$1
     fi
@@ -33,7 +33,7 @@ if [ $# -ge 1 ]; then
             OPENCENTER_SERVER=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+            echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
         fi
     fi
 fi
@@ -159,7 +159,7 @@ EOF
   done
 
   # FIXME(shep): This should really be debconf hackery instead
-  if [ "${ROLE}" == "client" ];then
+  if [ "${ROLE}" == "agent" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       /etc/init.d/opencenter-agent restart
