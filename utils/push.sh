@@ -88,10 +88,16 @@ function repo_push() {
     repo=$1
     ip=$2
     echo " - pushing ${repo}"
+
     pushd ${REPO_PATH}${repo} >&99 2>&1
-    git push root@${ip}:/root/${repo} HEAD:master >&99 2>&1
-    ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
+    if [ "$OC_SYNC" == "rsync" ]; then
+        rsync -e "ssh ${SSHOPTS}" -C -av --delete --exclude='*.conf' --exclude='*.db' . root@${ip}:/root/${repo} >&99 2>&1
+    else
+        git push root@${ip}:/root/${repo} HEAD:master >&99 2>&1
+        ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
+    fi
     popd >&99 2>&1
+
 }
 
 function push_opencenter_agent() {
