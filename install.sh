@@ -20,11 +20,12 @@ set -e
 ROLE="server"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
+USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
 
 if [ $# -ge 1 ]; then
     if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
+        echo $USAGE
     else
         ROLE=$1
     fi
@@ -33,7 +34,7 @@ if [ $# -ge 1 ]; then
             OPENCENTER_SERVER=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
+            echo $USAGE
         fi
     fi
 fi

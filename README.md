@@ -31,11 +31,11 @@ Prerequisities
 Installing individual servers
 -----------------------
 
-    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s {server | agent | dashboard} <SERVER IP>
+    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s [server | agent | dashboard] <SERVER IP>
     Defaults to {server} 0.0.0.0
 
 * NB This doesn't have the same pre-requisites
-Wiping the Cluster
+Wiping the Cluster 
 -----------------------
 
     ./utils/wipe.sh <Cluster-Name>
@@ -52,13 +52,13 @@ you can push updates and have the services restart automaticallyL
     <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
     <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}
     <repo path> can be left blank if you are within one of the directories, otherwise specify the path
-
+ 
 Tailing Task Logs on Opencenter servers:
 -----------------------
 
 This should show the last 1K of the task logs, updating every 10 seconds.
     ./utils/logtail.py <task_id>
-
+ 
 Rerunning Setup Script on the 4 nodes.
 -----------------------
 
@@ -68,8 +68,8 @@ opencenter-cluster.sh with the same prefix as used initially.
 
     export RERUN=true
     ./opencenter-cluster.sh <Cluster-Name>
-
-Creating DNS records
+ 
+C reating DNS records
 --------------------
 
     ./utils/syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
