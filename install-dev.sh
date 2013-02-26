@@ -130,7 +130,7 @@ function install_ubuntu() {
 
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Required Packages"
-      if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+      if ! ( ${aptget} install -y -q ${opencenter_pkgs} ); then
           echo "Failed to install opencenter-agent"
           exit 1
       fi
@@ -145,7 +145,7 @@ function install_ubuntu() {
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${agent_pkgs} )
+  pkg_list=( ${opencenter_pkgs} )
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${dashboard_pkgs} )
   fi
@@ -247,7 +247,7 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-agent_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
 dashboard_pkgs="build-essential git"
 ####################
 
