@@ -7,7 +7,7 @@ You can use the individual scripts to install the components on servers rather t
 Installing Opencenter Cluster
 -----------------------
 
-    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> {--packages}
+    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> [--packages]
 
 * Number of Clients defaults to 2 if left unspecified
 * If you are using opencenter-client locally you can set your endpoint:
@@ -31,14 +31,14 @@ Prerequisities
 Installing individual servers
 -----------------------
 
-    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install-server.sh" | bash -s {server | client | dashboard} <SERVER IP>
-    Defaults to {server} 0.0.0.0
+    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s [server | agent | dashboard] <SERVER IP>
+    Defaults to "server" 0.0.0.0
 
 * NB This doesn't have the same pre-requisites
-Wiping the Cluster
+Wiping the Cluster 
 -----------------------
 
-    ./ron-cruft/wipe.sh <Cluster-Name>
+    ./utils/wipe.sh <Cluster-Name>
 
 This will remove all cloud servers in the cluster and delete the specific logs in /tmp
 
@@ -48,18 +48,18 @@ Pushing updates to the Cluster
 From within "opencenter", "opencenter-agent", "opencenter-client", "opencenter-dashboard" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./ron-cruft/push.sh <Cluster-Name> <repo> <repo path>
+    ./utils/push.sh <Cluster-Name> <repo> <repo path>
     <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
-    <repo> possible options: {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}
+    <repo> possible options: [opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard]
     <repo path> can be left blank if you are within one of the directories, otherwise specify the path
 
-Tailing Task Logs on Opencenter servers:
+ Tailing Task Logs on Opencenter servers:
 -----------------------
 
 This should show the last 1K of the task logs, updating every 10 seconds.
-    ./ron-cruft/logtail.py <task_id>
-
-Rerunning Setup Script on the 4 nodes.
+    ./utils/logtail.py <task_id>
+ 
+Rerunning Setup Script on the 4 nodes. 
 -----------------------
 
 If something failed during the setup of the node and you want to re-run the setup
@@ -68,17 +68,17 @@ opencenter-cluster.sh with the same prefix as used initially.
 
     export RERUN=true
     ./opencenter-cluster.sh <Cluster-Name>
-
-Creating DNS records
+ 
+C  reating DNS records
 --------------------
 
-    ./ron-cruft/syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
+    ./utils/syncdns.py <cloud dns domain> <path to pyrax config file> <opencenter cluster prefix>
 
 The DNS names execlude the cluster prefixes so that they stay consistent when you build a new cluster.
 
 For example:
 
-    (default27)MK63HADV33:ron-cruft hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
+    (default27)MK63HADV33:utils hugh3869$ python syncdns.py uk.rs.wherenow.org ~/.pyrax.cfg dev1
     uk.rs.wherenow.org
       opencenter-dashboard.uk.rs.wherenow.org A 95.138.169.97
       opencenter-client2.uk.rs.wherenow.org A 95.138.170.102

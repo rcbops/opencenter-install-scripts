@@ -18,31 +18,32 @@
 set -e
 
 ROLE="server"
-SERVER_IP=${OPENCENTER_SERVER:-"0.0.0.0"}
+OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
+USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
 
 if [ $# -ge 1 ]; then
-    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "dashboard" ]; then
+    if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+        echo $USAGE
     else
         ROLE=$1
     fi
     if [ $# -ge 2 ]; then
         if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
             if [ $ROLE != "server" ]; then
-                SERVER_IP=$2
+                OPENCENTER_SERVER=$2
             fi
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+            echo $USAGE
         fi
     fi
 fi
 
 VERSION="1.0.0"
 
-echo "INSTALLING AS ${ROLE} against server IP of ${SERVER_IP}"
+echo "INSTALLING AS ${ROLE} against server IP of ${OPENCENTER_SERVER}"
 export DEBIAN_FRONTEND=noninteractive
 
 function verify_apt_package_exists() {
@@ -88,27 +89,6 @@ function install_apt_repo() {
   fi
 }
 
-
-function ron_screen() {
-    cat > /root/.screenrc <<EOF
-hardstatus on
-hardstatus alwayslastline
-hardstatus string "%{.bW}%-w%{.rW}%n %t%{-}%+w %=%{..G} %H %{..Y} %d/%m %C%a"
-
-# fix up 256color
-attrcolor b ".I"
-termcapinfo xterm-256color 'Co#256:AB=\E[48;5;%dm:AF=\E[38;5;%dm'
-
-escape '\`q'
-
-defscrollback 1024
-
-vbell off
-startup_message off
-EOF
-}
-
-
 function do_git_update() {
     # $1 = repo name
     repo=$1
@@ -148,11 +128,9 @@ function install_ubuntu() {
     exit 1
   fi
 
-  ron_screen
-
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Required Packages"
-      if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+      if ! ( ${aptget} install -y -q ${opencenter_pkgs} ); then
           echo "Failed to install opencenter-agent"
           exit 1
       fi
@@ -167,7 +145,7 @@ function install_ubuntu() {
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${agent_pkgs} )
+  pkg_list=( ${opencenter_pkgs} )
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${dashboard_pkgs} )
   fi
@@ -209,7 +187,7 @@ EOF
           popd
       fi
       pushd opencenter-agent
-      sed "s/127.0.0.1/${SERVER_IP}/g" opencenter-agent.conf.sample > local.conf
+      sed "s/127.0.0.1/${OPENCENTER_SERVER}/g" opencenter-agent.conf.sample > local.conf
       sed "s/NOTSET/DEBUG/g" log.cfg > local-log.cfg
       PYTHONPATH=../opencenter screen -S opencenter-agent -d -m python ./opencenter-agent.py -v -c ./local.conf
       popd
@@ -225,7 +203,7 @@ EOF
 
       do_git_update opencenter-dashboard
       pushd opencenter-dashboard
-      sed "s/127.0.0.1/${SERVER_IP}/g" config.json.sample > config.json
+      sed "s/127.0.0.1/${OPENCENTER_SERVER}/g" config.json.sample > config.json
       make
       bash dashboard
       popd
@@ -269,7 +247,7 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-agent_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
 dashboard_pkgs="build-essential git"
 ####################
 

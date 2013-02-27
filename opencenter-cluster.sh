@@ -29,7 +29,7 @@ CLIENT_COUNT=2
 BASEDIR=$(dirname $0)
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
-USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> {--packages}"
+USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages]"
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
@@ -173,6 +173,12 @@ function setup_server_as() {
         scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
     fi
 
+    # Upload screen.rc file if exists
+    if [[ -f ${HOME}/.screenrc ]]; then
+        echo "Setting up .screenrc file"
+        scp ${SSHOPTS} ${HOME}/.screenrc root@$(ip_for ${server}):/root/.screenrc
+    fi
+
     ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
     if !( $USE_PACKAGES ); then
         echo "removing github key"
@@ -233,7 +239,7 @@ wait_for_ssh "opencenter-dashboard"
 nodes=(${nodes[@]} "opencenter-dashboard")
 
 for svr in ${nodes[@]}; do
-    what=client
+    what=agent
 
     if [ "${svr}" == "opencenter-server" ]; then
         what=server

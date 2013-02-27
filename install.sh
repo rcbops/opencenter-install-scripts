@@ -18,22 +18,23 @@
 set -e
 
 ROLE="server"
-SERVER_IP=${OPENCENTER_SERVER:-"0.0.0.0"}
+OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
+USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
 
 if [ $# -ge 1 ]; then
-    if [ $1 != "server" ] && [ $1 != "client" ] && [ $1 != "dashboard" ]; then
+    if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+        echo $USAGE
     else
         ROLE=$1
     fi
     if [ $# -ge 2 ]; then
         if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
-            SERVER_IP=$2
+            OPENCENTER_SERVER=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | client | dashboard} <Server-IP>"
+            echo $USAGE
         fi
     fi
 fi
@@ -132,7 +133,7 @@ function install_ubuntu() {
       echo "Installing Opencenter Dashboard"
       cat << EOF | debconf-set-selections
 opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
-opencenter-dashboard    opencenter/server_ip    string ${SERVER_IP}
+opencenter-dashboard    opencenter/server_ip    string ${OPENCENTER_SERVER}
 EOF
       if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
           echo "Failed to install Opencentre Dashboard"
@@ -159,11 +160,13 @@ EOF
   done
 
   # FIXME(shep): This should really be debconf hackery instead
-  if [ "${ROLE}" == "client" ];then
-      sed -i "s/127.0.0.1/${SERVER_IP}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+  if [ "${ROLE}" == "agent" ]; then
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       /etc/init.d/opencenter-agent restart
   elif [ "${ROLE}" == "server" ]; then
-      sed -i "s/127.0.0.1/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       /etc/init.d/opencenter-agent restart
   fi
 }
@@ -206,9 +209,9 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-server_pkgs="opencenter-simple python-opencenter opencenter-client"
+server_pkgs="opencenter-server python-opencenter opencenter-client"
 agent_pkgs="opencenter-agent"
-agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
 dashboard_pkgs="opencenter-dashboard"
 ####################
 
