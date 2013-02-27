@@ -21,6 +21,7 @@ REPO_PATH="../"
 exec 99>/tmp/push.log
 export BASH_XTRACEFD=99
 set -x
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 trap on_exit EXIT
 
@@ -93,6 +94,9 @@ function repo_push() {
     if [ "$OC_SYNC" == "rsync" ]; then
         rsync -e "ssh ${SSHOPTS}" -C -av --delete --exclude='*.conf' --exclude='*.db' . root@${ip}:/root/${repo} >&99 2>&1
     else
+        if [ -f ${SCRIPT_DIR}/GIT_SSH ]; then
+            export GIT_SSH="${SCRIPT_DIR}/GIT_SSH"
+        fi
         git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:master >&99 2>&1
         ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
     fi
