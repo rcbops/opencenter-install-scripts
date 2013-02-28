@@ -40,6 +40,7 @@ BASEDIR=$(dirname $0)
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
 USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages]"
+IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 
 if [ "x$1" != "x" ]; then
     CLUSTER_PREFIX=$1
@@ -216,7 +217,7 @@ fi
 imagelist=$($NOVA image-list)
 flavorlist=$($NOVA flavor-list)
 
-image=$(echo "${imagelist}" | grep "12.04 LTS" | head -n1 | awk '{ print $2 }')
+image=$(echo "${imagelist}" | grep "${IMAGE_TYPE}" | head -n1 | awk '{ print $2 }')
 flavor_2g=$(echo "${flavorlist}" | grep 2GB | head -n1 | awk '{ print $2 }')
 flavor_4g=$(echo "${flavorlist}" | grep 4GB | head -n1 | awk '{ print $2 }')
 

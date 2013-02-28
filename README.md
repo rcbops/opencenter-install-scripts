@@ -13,6 +13,7 @@ Installing Opencenter Cluster
 * If you are using opencenter-client locally you can set your endpoint:
 export OPENCENTER_ENDPOINT=http://<ip of server>:8080
 * --packages will install from packages instead of github repos, not for Dev work.
+* To use CentOS - export IMAGE_TYPE="CentOS 6.3"
 
 Prerequisities
 -----------------------
