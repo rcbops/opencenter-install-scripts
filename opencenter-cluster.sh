@@ -26,7 +26,6 @@
 #
 set -e
 set -u
-set -x
 
 declare -A PIDS
 
