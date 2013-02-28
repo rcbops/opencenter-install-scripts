@@ -67,6 +67,29 @@ function verify_apt_package_exists() {
   fi
 }
 
+function install_opencenter_yum_repo() {
+  echo "Adding OpenCenter yum repository"
+  cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
+[rcb-utils]
+name=RCB Utility packages for OpenCenter $1
+baseurl=http://build.monkeypuppetlabs.com/repo-testing/$1/\$releasever/\$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
+EOF
+  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key
+  if [[ $? -ne 0 ]]; then
+    echo "Unable to add the RCB GPG key."
+    exit 1
+  fi
+  if (! rpm -q epel-release 2>&1>/dev/null ); then
+      rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+      if [[ $? -ne 0 ]]; then
+        echo "Unable to add the EPEL repository."
+        exit 1
+      fi
+  fi
+ }
 
 function install_opencenter_apt_repo() {
   local aptkey=$(which apt-key)
@@ -182,8 +205,66 @@ EOF
 }
 
 
+function install_fedora() {
+  echo "Installing on Fedora"
+  install_opencenter_yum_repo "Fedora"
+
+  if [ "${ROLE}" = "agent" ]; then
+      echo "Installing Opencenter-Agent"
+      if ! ( yum install -y -q ${agent_pkgs} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+
+      echo ""
+      echo "Installing Agent Plugins"
+      if ! ( yum install -y -q ${agent_plugins} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+  fi
+
+  # FIXME(shep): This should really be debconf hackery instead
+  if [ "${ROLE}" == "agent" ]; then
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
+  elif [ "${ROLE}" == "server" ]; then
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
+  fi
+}
+
 function install_rhel() {
-  echo "Installing on RHEL"
+  echo "Installing on RHEL/CentOS"
+  install_opencenter_yum_repo "RedHat"
+
+  if [ "${ROLE}" = "agent" ]; then
+      echo "Installing Opencenter-Agent"
+      if ! ( yum install -y -q ${agent_pkgs} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+
+      echo ""
+      echo "Installing Agent Plugins"
+      if ! ( yum install -y -q ${agent_plugins} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+  fi
+
+  # FIXME(shep): This should really be debconf hackery instead
+  if [ "${ROLE}" == "agent" ]; then
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
+  elif [ "${ROLE}" == "server" ]; then
+      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      /etc/init.d/opencenter-agent restart
+  fi
 }
 
 function usage() {
@@ -258,10 +339,13 @@ if [ -f "/etc/lsb-release" ];
 then
   platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
   platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
-elif [ -f "/etc/system-release" ];
+elif [ -f "/etc/system-release-cpe" ];
 then
-  platform="rhel"
-  platform_version=$(cat /etc/redhat-release | awk '{print $3}')
+  platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
+  platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
+else
+  echo "Your platform is not supported.  Please let FIXME:RCB_EMAIL_HERE know"
+  exit 1
 fi
 
 # On ubuntu the version number needs to be mapped to a name
@@ -276,7 +360,8 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "rhel") install_rhel ;;
+  "rhel"|"centos") install_rhel ;;
+  "fedora") install_fedora ;;
 esac
 
 echo ""
