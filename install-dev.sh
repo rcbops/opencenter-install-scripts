@@ -1,18 +1,28 @@
 #!/bin/bash
+#               OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
+##############################################################################
 #
-# Copyright 2012, Rackspace US, Inc.
+# OpenCenter is licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.  This
+# version of OpenCenter includes Rackspace trademarks and logos, and in
+# accordance with Section 6 of the License, the provision of commercial
+# support services in conjunction with a version of OpenCenter which includes
+# Rackspace trademarks and logos is prohibited.  OpenCenter source code and
+# details are available at: # https://github.com/rcbops/opencenter or upon
+# written request.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this
+# notice, is available in the LICENSE file accompanying this software.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the # specific language governing permissions and limitations
+# under the License.
+#
+##############################################################################
+#
 #
 # set -x
 set -e
@@ -62,6 +72,45 @@ function verify_apt_package_exists() {
   fi
 }
 
+function verify_yum_package_exists() {
+   # $1 - name of package to testing
+   if [[ -z $VERBOSE ]]; then
+     rpm -q $1 > /dev/null 2>&1
+   else
+     rpm -q $1
+   fi
+
+   if [ $? -ne 0 ];
+   then
+     return 1
+   else
+     return 0
+   fi
+}
+
+function install_opencenter_yum_repo() {
+  echo "Adding OpenCenter yum repository"
+  cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
+[rcb-utils]
+name=RCB Utility packages for OpenCenter $1
+baseurl=http://build.monkeypuppetlabs.com/repo-testing/$1/\$releasever/\$basearch/
+enabled=1
+gpgcheck=1
+gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
+EOF
+  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key
+  if [[ $? -ne 0 ]]; then
+      echo "Unable to add the RCB GPG key."
+      exit 1
+  fi
+  if (! rpm -q epel-release 2>&1>/dev/null ); then
+      rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+      if [[ $? -ne 0 ]]; then
+          echo "Unable to add the EPEL repository."
+          exit 1
+      fi
+  fi
+}
 
 function install_apt_repo() {
   local aptkey=$(which apt-key)
@@ -103,61 +152,7 @@ function do_git_update() {
 }
 
 
-function install_ubuntu() {
-  local aptget=$(which apt-get)
-
-  # Install apt repo
-  install_apt_repo
-
-  if [ "${ROLE}" != "dashboard" ]; then
-      apt-get update
-      apt-get install -y python-software-properties
-      add-apt-repository -y ppa:cassou/emacs
-  fi
-  # Run an apt-get update to make sure sources are up to date
-  echo "Refreshing package list"
-  if [[ -z $VERBOSE ]]; then
-    ${aptget} -q update >/dev/null
-  else
-    ${aptget} update
-  fi
-
-  if [[ $? -ne 0 ]];
-  then
-    echo "apt-get update failed to execute successfully."
-    exit 1
-  fi
-
-  if [ "${ROLE}" != "dashboard" ]; then
-      echo "Installing Required Packages"
-      if ! ( ${aptget} install -y -q ${opencenter_pkgs} ); then
-          echo "Failed to install opencenter-agent"
-          exit 1
-      fi
-  fi
-
-  if [ "${ROLE}" == "dashboard" ]; then
-      if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
-          echo "Failed to install Required Packages"
-          exit 1
-      fi
-  fi
-
-  echo ""
-  echo "Verifying packages installed successfully"
-  pkg_list=( ${opencenter_pkgs} )
-  if [ "${ROLE}" == "dashboard" ]; then
-      pkg_list=( ${dashboard_pkgs} )
-  fi
-  for x in ${pkg_list[@]}; do
-    if ! verify_apt_package_exists ${x};
-    then
-      echo "Package ${x} was not installed successfully"
-      echo ".. please run dpkg -i ${x} for more information"
-      exit 1
-    fi
-  done
-
+function git_setup() {
   cat > /root/.ssh/config <<EOF
 Host *github.com
     StrictHostKeyChecking no
@@ -168,7 +163,7 @@ EOF
       do_git_update opencenter-client
 
       pushd opencenter-client
-      sudo python ./setup.py install
+      python ./setup.py install
       popd
 
       if [ "${ROLE}" == "server" ]; then
@@ -210,8 +205,102 @@ EOF
   fi
 }
 
+
+function install_ubuntu() {
+  local aptget=$(which apt-get)
+
+  # Install apt repo
+  install_apt_repo
+
+  if [ "${ROLE}" != "dashboard" ]; then
+      ${aptget} update
+      ${aptget} install -y python-software-properties
+      add-apt-repository -y ppa:cassou/emacs
+  fi
+  # Run an apt-get update to make sure sources are up to date
+  echo "Refreshing package list"
+  if [[ -z $VERBOSE ]]; then
+    ${aptget} -q update >/dev/null
+  else
+    ${aptget} update
+  fi
+
+  if [[ $? -ne 0 ]];
+  then
+    echo "apt-get update failed to execute successfully."
+    exit 1
+  fi
+
+  if [ "${ROLE}" != "dashboard" ]; then
+      echo "Installing Required Packages"
+      if ! ( ${aptget} install -y -q ${apt_opencenter_pkgs} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+  fi
+
+  if [ "${ROLE}" == "dashboard" ]; then
+      if ! ( ${aptget} install -y -q ${apt_dashboard_pkgs} ); then
+          echo "Failed to install Required Packages"
+          exit 1
+      fi
+  fi
+
+  echo ""
+  echo "Verifying packages installed successfully"
+  pkg_list=( ${apt_opencenter_pkgs} )
+  if [ "${ROLE}" == "dashboard" ]; then
+      pkg_list=( ${apt_dashboard_pkgs} )
+  fi
+  for x in ${pkg_list[@]}; do
+    if ! verify_apt_package_exists ${x};
+    then
+      echo "Package ${x} was not installed successfully"
+      echo ".. please run dpkg -i ${x} for more information"
+      exit 1
+    fi
+  done
+  git_setup
+}
+
+
 function install_rhel() {
-  echo "Installing on RHEL"
+  echo "Installing on RHEL/CentOS"
+  local yum=$(which yum)
+  install_opencenter_yum_repo "RedHat"
+
+  if [ "${ROLE}" != "dashboard" ]; then
+      echo "Installing Required Packages"
+      if ! ( ${yum} install -y -q ${yum_opencenter_pkgs} ); then
+          echo "Failed to install opencenter-agent"
+          exit 1
+      fi
+  fi
+
+  if [ "${ROLE}" == "dashboard" ]; then
+      if ! ( ${yum} install -y -q ${yum_dashboard_pkgs} ); then
+          echo "Failed to install Required Packages"
+          exit 1
+      fi
+  fi
+
+  echo ""
+  echo "Verifying packages installed successfully"
+  pkg_list=( ${yum_opencenter_pkgs} )
+  if [ "${ROLE}" == "dashboard" ]; then
+      pkg_list=( ${yum_dashboard_pkgs} )
+  fi
+  for x in ${pkg_list[@]}; do
+    if ! verify_yum_package_exists ${x};
+    then
+      echo "Package ${x} was not installed successfully"
+      echo ".. please run rpm -q ${x} for more information"
+      exit 1
+    fi
+  done
+
+  git_setup
+  iptables -F
 }
 
 function usage() {
@@ -247,8 +336,10 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
-dashboard_pkgs="build-essential git"
+apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+apt_dashboard_pkgs="build-essential git"
+yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-sqlalchemy0.7 python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+yum_dashboard_pkgs="gcc gcc-c++ make kernel-devel git"
 ####################
 
 ####################
@@ -284,10 +375,10 @@ if [ -f "/etc/lsb-release" ];
 then
   platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
   platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
-elif [ -f "/etc/system-release" ];
+elif [ -f "/etc/system-release-cpe" ];
 then
-  platform="rhel"
-  platform_version=$(cat /etc/redhat-release | awk '{print $3}')
+  platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
+  platform_version=$(cat /etc/redhat-release-cpe | cut -d ":" -f 5)
 fi
 
 # On ubuntu the version number needs to be mapped to a name
@@ -302,9 +393,16 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "rhel") install_rhel ;;
+  "rhel"|"centos") install_rhel ;;
+  "fedora") install_fedora ;;
 esac
 
 echo ""
+echo "
+OpenCenter™ is Copyright 2013 by Rackspace US, Inc.
+OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at:  <OpenCenter Source Repository> or upon written request.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"
 echo "You have installed Opencenter. WooHoo!!"
 exit
