@@ -21,6 +21,7 @@ import sys
 import socket
 import urlparse
 
+
 def ensure_callable(item):
     """nasty hack to get round requests api change"""
     if callable(item):
@@ -28,18 +29,19 @@ def ensure_callable(item):
     else:
         return lambda: item
 
+
 def dump_info(endpoint, task_id):
     log_request_url = '%s/tasks/%d/logs' % (endpoint, task_id)
     task_request_url = '%s/tasks/%d' % (endpoint, task_id)
 
     task_info = requests.get(task_request_url)
-    task_info.json=ensure_callable(task_info.json)
+    task_info.json = ensure_callable(task_info.json)
 
     if (task_info.status_code >= 200 and task_info.status_code < 300):
         task_status = task_info.json()['task']['state']
 
     log = requests.get(log_request_url + '?watch')
-    log.json=ensure_callable(log.json)
+    log.json = ensure_callable(log.json)
 
     if (log.status_code >= 200 and log.status_code < 300):
         txid = log.json()['request']
@@ -59,9 +61,9 @@ def dump_info(endpoint, task_id):
         data = fd.recv(4096)
         linedata = data.split('\n')
 
-        while(len(linedata) > 0 and \
-                  linedata[0] != '' and \
-                  linedata[0] != '\r'):
+        while(len(linedata) > 0 and
+              linedata[0] != '' and
+              linedata[0] != '\r'):
             linedata.pop(0)
 
     sys.stdout.write('\n'.join(linedata))
@@ -69,7 +71,7 @@ def dump_info(endpoint, task_id):
     while True:
         data = fd.recv(1024)
         if data == '':
-            break;
+            break
 
         sys.stdout.write(data)
 
