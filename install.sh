@@ -82,11 +82,15 @@ EOF
     echo "Unable to add the RCB GPG key."
     exit 1
   fi
-  if (! rpm -q epel-release 2>&1>/dev/null ); then
-      rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
-      if [[ $? -ne 0 ]]; then
-        echo "Unable to add the EPEL repository."
-        exit 1
+  if [[ $1 = "Fedora" ]]; then
+      echo "skipping epel installation for Fedora"
+  else
+      if (! rpm -q epel-release 2>&1>/dev/null ); then
+          rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+          if [[ $? -ne 0 ]]; then
+            echo "Unable to add the EPEL repository."
+            exit 1
+          fi
       fi
   fi
  }
@@ -205,11 +209,17 @@ EOF
 }
 
 
-function install_fedora() {
-  echo "Installing on Fedora"
-  install_opencenter_yum_repo "Fedora"
+function install_rpm() {
 
-  if [ "${ROLE}" = "agent" ]; then
+  if [ "${ROLE}" == "server" ]; then
+      echo "Installing Opencenter-Server"
+      if ! ( yum install -y -q ${server_pkgs} ); then
+          echo "Failed to install opencenter"
+          exit 1
+      fi
+  fi
+
+  if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Opencenter-Agent"
       if ! ( yum install -y -q ${agent_pkgs} ); then
           echo "Failed to install opencenter-agent"
@@ -224,33 +234,10 @@ function install_fedora() {
       fi
   fi
 
-  # FIXME(shep): This should really be debconf hackery instead
-  if [ "${ROLE}" == "agent" ]; then
-      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
-      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      /etc/init.d/opencenter-agent restart
-  elif [ "${ROLE}" == "server" ]; then
-      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
-      sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      /etc/init.d/opencenter-agent restart
-  fi
-}
-
-function install_rhel() {
-  echo "Installing on RHEL/CentOS"
-  install_opencenter_yum_repo "RedHat"
-
-  if [ "${ROLE}" = "agent" ]; then
-      echo "Installing Opencenter-Agent"
-      if ! ( yum install -y -q ${agent_pkgs} ); then
-          echo "Failed to install opencenter-agent"
-          exit 1
-      fi
-
-      echo ""
-      echo "Installing Agent Plugins"
-      if ! ( yum install -y -q ${agent_plugins} ); then
-          echo "Failed to install opencenter-agent"
+  if [ "${ROLE}" == "dashboard" ]; then
+      echo "Installing Opencenter Dashboard"
+      if ! ( yum install -y -q ${dashboard_pkgs} ); then
+          echo "Failed to install Opencentre Dashboard"
           exit 1
       fi
   fi
@@ -360,8 +347,12 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "rhel"|"centos") install_rhel ;;
-  "fedora") install_fedora ;;
+  "rhel"|"centos") install_opencenter_yum_repo "RedHat"
+                   install_rpm
+                   ;;
+  "fedora") install_opencenter_yum_repo "Fedora"
+                   install_rpm
+                   ;;
 esac
 
 echo ""
