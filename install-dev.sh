@@ -1,18 +1,28 @@
 #!/bin/bash
+#               OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
+##############################################################################
 #
-# Copyright 2012, Rackspace US, Inc.
+# OpenCenter is licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.  This
+# version of OpenCenter includes Rackspace trademarks and logos, and in
+# accordance with Section 6 of the License, the provision of commercial
+# support services in conjunction with a version of OpenCenter which includes
+# Rackspace trademarks and logos is prohibited.  OpenCenter source code and
+# details are available at: # https://github.com/rcbops/opencenter or upon
+# written request.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this
+# notice, is available in the LICENSE file accompanying this software.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the # specific language governing permissions and limitations
+# under the License.
+#
+##############################################################################
+#
 #
 # set -x
 set -e
@@ -20,11 +30,12 @@ set -e
 ROLE="server"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
+USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
 
 if [ $# -ge 1 ]; then
     if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
+        echo $USAGE
     else
         ROLE=$1
     fi
@@ -35,7 +46,7 @@ if [ $# -ge 1 ]; then
             fi
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
+            echo $USAGE
         fi
     fi
 fi
@@ -129,7 +140,7 @@ function install_ubuntu() {
 
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Required Packages"
-      if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
+      if ! ( ${aptget} install -y -q ${opencenter_pkgs} ); then
           echo "Failed to install opencenter-agent"
           exit 1
       fi
@@ -144,7 +155,7 @@ function install_ubuntu() {
 
   echo ""
   echo "Verifying packages installed successfully"
-  pkg_list=( ${agent_pkgs} )
+  pkg_list=( ${opencenter_pkgs} )
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${dashboard_pkgs} )
   fi
@@ -246,7 +257,7 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-agent_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
 dashboard_pkgs="build-essential git"
 ####################
 

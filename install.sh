@@ -1,18 +1,28 @@
 #!/bin/bash
+#               OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
+##############################################################################
 #
-# Copyright 2012, Rackspace US, Inc.
+# OpenCenter is licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.  This
+# version of OpenCenter includes Rackspace trademarks and logos, and in
+# accordance with Section 6 of the License, the provision of commercial
+# support services in conjunction with a version of OpenCenter which includes
+# Rackspace trademarks and logos is prohibited.  OpenCenter source code and
+# details are available at: # https://github.com/rcbops/opencenter or upon
+# written request.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this
+# notice, is available in the LICENSE file accompanying this software.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the # specific language governing permissions and limitations
+# under the License.
+#
+##############################################################################
+#
 #
 # set -x
 set -e
@@ -20,11 +30,12 @@ set -e
 ROLE="server"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
+USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
 
 if [ $# -ge 1 ]; then
     if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
         echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
+        echo $USAGE
     else
         ROLE=$1
     fi
@@ -33,7 +44,7 @@ if [ $# -ge 1 ]; then
             OPENCENTER_SERVER=$2
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo "Usage: ./install-server.sh {server | agent | dashboard} <Server-IP>"
+            echo $USAGE
         fi
     fi
 fi
@@ -210,7 +221,7 @@ uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
 server_pkgs="opencenter-server python-opencenter opencenter-client"
 agent_pkgs="opencenter-agent"
-agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
 dashboard_pkgs="opencenter-dashboard"
 ####################
 
@@ -269,5 +280,11 @@ case $platform in
 esac
 
 echo ""
+echo "
+OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc. 
+OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at:  <OpenCenter Source Repository> or upon written request.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"
 echo "You have installed Opencenter. WooHoo!!"
 exit

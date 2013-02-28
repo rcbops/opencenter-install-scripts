@@ -1,19 +1,29 @@
 #!/usr/bin/env bash
+#               OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
+##############################################################################
 #
-# Copyright 2012, Rackspace US, Inc.
+# OpenCenter is licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.  This
+# version of OpenCenter includes Rackspace trademarks and logos, and in
+# accordance with Section 6 of the License, the provision of commercial
+# support services in conjunction with a version of OpenCenter which includes
+# Rackspace trademarks and logos is prohibited.  OpenCenter source code and
+# details are available at: # https://github.com/rcbops/opencenter or upon
+# written request.
 #
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this
+# notice, is available in the LICENSE file accompanying this software.
 #
 # Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the # specific language governing permissions and limitations
+# under the License.
 #
+##############################################################################
+#
+
 set -e
 
 NOVA=${NOVA:-nova}
@@ -21,6 +31,7 @@ REPO_PATH="../"
 exec 99>/tmp/push.log
 export BASH_XTRACEFD=99
 set -x
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 trap on_exit EXIT
 
@@ -36,7 +47,7 @@ declare -A PIDS
 declare -A IPADDRS
 
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-
+PUSHOPTS="${PUSHOPTS}"
 CLUSTER_PREFIX="c1"
 
 if [ "x$1" != "x" ]; then
@@ -93,7 +104,10 @@ function repo_push() {
     if [ "$OC_SYNC" == "rsync" ]; then
         rsync -e "ssh ${SSHOPTS}" -C -av --delete --exclude='*.conf' --exclude='*.db' . root@${ip}:/root/${repo} >&99 2>&1
     else
-        git push root@${ip}:/root/${repo} HEAD:master >&99 2>&1
+        if [ -f ${SCRIPT_DIR}/GIT_SSH ]; then
+            export GIT_SSH="${SCRIPT_DIR}/GIT_SSH"
+        fi
+        git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:master >&99 2>&1
         ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
     fi
     popd >&99 2>&1
