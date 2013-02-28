@@ -36,9 +36,7 @@ RERUN=${RERUN:-false}
 USE_PACKAGES=false
 CLUSTER_PREFIX="c1"
 CLIENT_COUNT=2
-# BASEDIR=$(dirname $(readlink -f $0))
-# README(shep): the above does not work on OSX
-BASEDIR=$(dirname $(cd "$(dirname "$0")"; pwd))
+BASEDIR=$(dirname $0)
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
 USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages]"
