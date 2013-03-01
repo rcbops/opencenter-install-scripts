@@ -34,12 +34,14 @@ declare -A PIDS
 NOVA=${NOVA:-nova}
 RERUN=${RERUN:-false}
 USE_PACKAGES=false
+USE_NETWORK=false
+PRIV_NETWORK="192.168.0.0/24"
 CLUSTER_PREFIX="c1"
 CLIENT_COUNT=2
 BASEDIR=$(dirname $(readlink $0))
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
-USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages]"
+USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network]"
 IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 
 if [ "x$1" != "x" ]; then
@@ -55,11 +57,30 @@ if [ $# -ge 2 ]; then
     fi
 fi
 
+
 if [ $# -ge 3 ]; then
     if [ "$3" == "--packages" ]; then
-        echo "Using Packages"
         USE_PACKAGES=true
         DASHBOARD_PORT=80
+        if [ $# -ge 4 ] && [ "$4" == "--network" ]; then
+            echo "Using Private Network"
+            USE_NETWORK=true
+        elif [ $# -ge 4 ] && [ "$4" != "--network" ]; then
+            echo $USAGE
+            exit 1
+        fi
+        echo "Using Packages"
+    elif [ "$3" == "--network" ]; then
+        USE_NETWORK=true
+        if [ $# -ge 4 ] && [ "$4" == "--packages" ]; then
+            echo "Using Packages"
+            USE_PACKAGES=true
+            DASHBOARD_PORT=80
+        elif [ $# -ge 4 ] && [ "$4" != "--packages" ]; then
+            echo $USAGE
+            exit 1
+        fi
+        echo "Using Private Network"
     else
         echo $USAGE
         exit 1
@@ -213,6 +234,21 @@ then
         exit 1
     fi
 fi
+network_string=""
+if $USE_NETWORK
+then
+    if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX} ); then
+        echo "Network ${CLUSTER_PREFIX}-net already exists, delete and re-run or use different prefix"
+        exit 1
+    fi
+    if !( $NOVA network-create ${CLUSTER_PREFIX}-net ${PRIV_NETWORK} > /dev/null 2>&1 ); then
+        echo "Error creating Network - run $NOVA network-create ${CLUSTER_PREFIX}-net ${PRIV_NETWORK} to diagnose"
+        exit 1
+    fi
+    priv_network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
+    network_string="--nic net-id=${priv_network_id}"
+    echo "Network ${priv_network_id} created"
+fi
 
 imagelist=$($NOVA image-list)
 flavorlist=$($NOVA flavor-list)
@@ -230,11 +266,11 @@ then
 fi
 
 if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
-    instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-server) > /dev/null 2>&1
+    instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-server) > /dev/null 2>&1
     for client in $(seq 1 $CLIENT_COUNT); do
-        instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-client${client}) > /dev/null 2>&1
+        instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-client${client}) > /dev/null 2>&1
     done
-    instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-dashboard) > /dev/null 2>&1
+    instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-dashboard) > /dev/null 2>&1
 else
     echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
     exit 1
