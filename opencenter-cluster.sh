@@ -38,7 +38,11 @@ USE_NETWORK=false
 PRIV_NETWORK="192.168.0.0/24"
 CLUSTER_PREFIX="c1"
 CLIENT_COUNT=2
-BASEDIR=$(dirname $0)
+if [ -L $0 ]; then
+    BASEDIR=$(dirname $(readlink $0))
+else
+    BASEIDR=$(dirname $0)
+fi
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
 USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network(=<CIDR>)]"
