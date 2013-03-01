@@ -27,7 +27,6 @@
 set -e
 NOVA=${NOVA:-nova}
 CLUSTER_PREFIX=${1:-c1}
-
 items=$($NOVA list |awk "\$4~/^\\s*${CLUSTER_PREFIX}-/{print \$4}" )
 
 for item in ${items}; do
@@ -35,3 +34,11 @@ for item in ${items}; do
     $NOVA delete ${item}
     [ -e /tmp/${item}.log ] && rm /tmp/${item}.log
 done
+
+if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX} ); then
+    network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
+    echo "Deleting ${CLUSTER_PREFIX}-net Network $network_id"
+    while !( $NOVA network-delete $network_id ); do
+        sleep 3
+    done
+fi
