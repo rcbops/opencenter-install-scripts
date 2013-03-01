@@ -336,9 +336,9 @@ VERBOSE=
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
 pkg_path="/proposed-packages"
-apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 apt_dashboard_pkgs="build-essential git"
-yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-sqlalchemy0.7 python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces"
+yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-sqlalchemy0.7 python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 yum_dashboard_pkgs="gcc gcc-c++ make kernel-devel git"
 ####################
 
