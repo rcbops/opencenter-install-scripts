@@ -45,7 +45,7 @@ else
 fi
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
-USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network]"
+USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network(=<CIDR>)]"
 IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 
 if [ "x$1" != "x" ]; then
@@ -63,19 +63,35 @@ fi
 
 
 if [ $# -ge 3 ]; then
-    if [ "$3" == "--packages" ]; then
+    flag=$(echo $3 | cut -d "=" -f1)
+    if [ "$flag" == "--packages" ]; then
         USE_PACKAGES=true
         DASHBOARD_PORT=80
-        if [ $# -ge 4 ] && [ "$4" == "--network" ]; then
-            echo "Using Private Network"
-            USE_NETWORK=true
-        elif [ $# -ge 4 ] && [ "$4" != "--network" ]; then
+        if [ $# -ge 4 ]; then
+            flag=$(echo $4 | cut -d "=" -f1 )
+            if [ "$flag" == "--network" ]; then
+               net_range=$(echo $4 | cut -d "=" -f2)
+               echo $net_range
+               USE_NETWORK=true
+               if ( echo $net_range | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1); then
+                   PRIV_NETWORK=$net_range
+               elif [ "$net_range" != "--network" ]; then
+                   echo $USAGE
+                   exit 1
+               fi
+               echo "Using Private Network: $PRIV_NETWORK"
+            fi
+        fi
+        echo "Using Packages"
+    elif [ "$flag" == "--network" ]; then
+        net_range=$(echo $3 | cut -d "=" -f2 )
+        USE_NETWORK=true
+        if ( echo $net_range | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1); then
+            PRIV_NETWORK=$net_range
+        elif [ "$net_range" != "--network" ]; then
             echo $USAGE
             exit 1
         fi
-        echo "Using Packages"
-    elif [ "$3" == "--network" ]; then
-        USE_NETWORK=true
         if [ $# -ge 4 ] && [ "$4" == "--packages" ]; then
             echo "Using Packages"
             USE_PACKAGES=true
@@ -84,7 +100,7 @@ if [ $# -ge 3 ]; then
             echo $USAGE
             exit 1
         fi
-        echo "Using Private Network"
+        echo "Using Private Network: $PRIV_NETWORK"
     else
         echo $USAGE
         exit 1
