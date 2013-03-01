@@ -172,7 +172,7 @@ function push_opencenter_dashboard() {
     repo="opencenter-dashboard"
     repo_push $repo $ip
     echo " - restarting opencenter-dashboard"
-    ssh ${SSHOPTS} root@${ip} /bin/bash -c 'cd /root/opencenter-dashboard; cd /root/opencenter-dashboard; ./opencenter-dashboard' >&99 2>&1
+    ssh ${SSHOPTS} root@${ip} /bin/bash -c 'cd /root/opencenter-dashboard; cd /root/opencenter-dashboard; ./dashboard' >&99 2>&1
 }
 
 nodes=$($NOVA list |grep -o "${CLUSTER_PREFIX}-[a-zA-Z0-9_-]*" )
