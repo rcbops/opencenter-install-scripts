@@ -22,12 +22,12 @@ import socket
 import urlparse
 
 
-def ensure_callable(item):
+def get_json(item):
     """nasty hack to get round requests api change"""
     if callable(item):
-        return item
+        return item()
     else:
-        return lambda: item
+        return item
 
 
 def dump_info(endpoint, task_id):
@@ -35,16 +35,16 @@ def dump_info(endpoint, task_id):
     task_request_url = '%s/tasks/%d' % (endpoint, task_id)
 
     task_info = requests.get(task_request_url)
-    task_info.json = ensure_callable(task_info.json)
+    task_json = get_json(task_info.json)
 
     if (task_info.status_code >= 200 and task_info.status_code < 300):
-        task_status = task_info.json()['task']['state']
+        task_status = task_json['task']['state']
 
     log = requests.get(log_request_url + '?watch')
-    log.json = ensure_callable(log.json)
+    log_json = get_json(log.json)
 
     if (log.status_code >= 200 and log.status_code < 300):
-        txid = log.json()['request']
+        txid = log.json['request']
     else:
         print 'error getting transaction'
         sys.exit(1)
