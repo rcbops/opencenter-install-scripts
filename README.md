@@ -7,14 +7,15 @@ You can use the individual scripts to install the components on servers rather t
 Installing Opencenter Cluster
 -----------------------
 
-    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> [--packages] [--network]
+    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> [--packages] [--network(=<CIDR>)]
 
 * Number of Clients defaults to 2 if left unspecified
 * If you are using opencenter-client locally you can set your endpoint:
 export OPENCENTER_ENDPOINT=http://<ip of server>:8080
 * --packages will install from packages instead of github repos, not for Dev work.
 * To use CentOS - export IMAGE_TYPE="CentOS 6.3"
-* --network will create a private network for the cluster on 192.168.0.0/24
+* --network will create a private network for the cluster defaulting to 192.168.0.0/24
+* network range can be specified as a CIDR by using --network=<CIDR>
 * --network will require nova with "network-create" functionality
 
 Prerequisities

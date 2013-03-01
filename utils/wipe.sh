@@ -38,7 +38,7 @@ done
 if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX} ); then
     network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
     echo "Deleting ${CLUSTER_PREFIX}-net Network $network_id"
-    while !( $NOVA network-delete $network_id ); do
+    while !( $NOVA network-delete $network_id > /dev/null 2>&1 ); do
         sleep 3
     done
 fi
