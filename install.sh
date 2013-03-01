@@ -27,7 +27,7 @@
 # set -x
 set -e
 
-ROLE="server"
+ROLE="agent"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
 USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
