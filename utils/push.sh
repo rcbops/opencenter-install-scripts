@@ -158,7 +158,7 @@ function push_opencenter_dashboard() {
     repo="opencenter-dashboard"
     repo_push $repo $ip
     echo " - restarting opencenter-dashboard"
-    ssh ${SSHOPTS} root@${ip} '/bin/bash -c "source /root/.profile;cd /root/opencenter-dashboard; ./dashboard"' >&99 2>&1
+    ssh ${SSHOPTS} root@${ip} '/bin/bash -c "source /root/.profile;cd /root/opencenter-dashboard; make publish; ./dashboard"' >&99 2>&1
 }
 
 nodes=$($NOVA list |grep -o "${CLUSTER_PREFIX}-[a-zA-Z0-9_-]*" )
@@ -169,16 +169,18 @@ done
 case "$PUSH_PROJECT" in
     "opencenter-all")
         for node in ${nodes}; do
-            if [ "${node}" != "$(mangle_name 'opencenter-dashboard')" ]; then
                 echo "Updating ${node}"
                 echo " - setting git config for ${node} on IP : ${IPADDRS[$node]}"
                 ssh ${SSHOPTS} root@${IPADDRS[$node]} 'git config --global receive.denyCurrentBranch ignore' >&99 2>&1
-                push_opencenter_client ${IPADDRS[$node]}
-                push_opencenter_agent ${IPADDRS[$node]}
-                if [ "$node" == "$(mangle_name 'opencenter-server')" ]; then
-                    push_opencenter_server ${IPADDRS[$node]}
+                if [ "${node}" = "$(mangle_name 'opencenter-dashboard')" ]; then
+                    push_opencenter_dashboard ${IPADDRS[$node]}
+                else
+                    push_opencenter_client ${IPADDRS[$node]}
+                    push_opencenter_agent ${IPADDRS[$node]}
+                    if [ "$node" == "$(mangle_name 'opencenter-server')" ]; then
+                        push_opencenter_server ${IPADDRS[$node]}
+                    fi
                 fi
-            fi
         done
         ;;
 
