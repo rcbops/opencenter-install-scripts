@@ -41,7 +41,7 @@ CLIENT_COUNT=2
 if [ -L $0 ]; then
     BASEDIR=$(dirname $(readlink $0))
 else
-    BASEIDR=$(dirname $0)
+    BASEDIR=$(dirname $0)
 fi
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
