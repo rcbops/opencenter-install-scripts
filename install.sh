@@ -85,7 +85,7 @@ gpgcheck=1
 gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
 EOF
   rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key &>/dev/null || :
-  if [[ $1 = "Fedora" ]]; then
+  if [[ $1 == "Fedora" ]]; then
       echo "skipping epel installation for Fedora"
   else
       if (! rpm -q epel-release 2>&1>/dev/null ); then
@@ -366,7 +366,7 @@ case $platform in
   "centos") install_opencenter_yum_repo "CentOS"
                    install_rpm
                    ;;
-  "fedora") install_opencenter_yum_repo "Fedora"
+  "fedoraproject") install_opencenter_yum_repo "Fedora"
                    install_rpm
                    ;;
 esac
