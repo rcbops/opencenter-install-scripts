@@ -89,26 +89,33 @@ function verify_yum_package_exists() {
 }
 
 function install_opencenter_yum_repo() {
-  echo "Adding OpenCenter yum repository"
+  releasever="6"
+  releasedir="Fedora"
+  case $1 in
+    "Fedora") releasever="17"; releasedir="Fedora" ;;
+    "CentOS") releasever="6"; releasedir="RedHat" ;;
+    "RedHat") releasever="6"; releasedir="RedHat" ;;
+  esac
+  echo "Adding OpenCenter yum repository $releasedir/$releasever"
   cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
 [rcb-utils]
 name=RCB Utility packages for OpenCenter $1
-baseurl=http://build.monkeypuppetlabs.com/repo-testing/$1/\$releasever/\$basearch/
+baseurl=http://build.monkeypuppetlabs.com/repo-testing/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
 gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
 EOF
-  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key
-  if [[ $? -ne 0 ]]; then
-      echo "Unable to add the RCB GPG key."
-      exit 1
-  fi
-  if (! rpm -q epel-release 2>&1>/dev/null ); then
+  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key &>/dev/null || :
+  if [[ $1 == "Fedora" ]]; then
+    echo "skipping epel installation for Fedora"
+  else
+    if (! rpm -q epel-release 2>&1>/dev/null ); then
       rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
       if [[ $? -ne 0 ]]; then
-          echo "Unable to add the EPEL repository."
-          exit 1
+        echo "Unable to add the EPEL repository."
+        exit 1
       fi
+    fi
   fi
 }
 
@@ -378,7 +385,7 @@ then
 elif [ -f "/etc/system-release-cpe" ];
 then
   platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
-  platform_version=$(cat /etc/redhat-release-cpe | cut -d ":" -f 5)
+  platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
 fi
 
 # On ubuntu the version number needs to be mapped to a name
@@ -393,8 +400,15 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "redhat"|"centos") install_rhel ;;
-  "fedora") install_fedora ;;
+  "redhat") install_opencenter_yum_repo "RedHat"
+                   install_rhel
+                   ;;
+  "centos") install_opencenter_yum_repo "CentOS" 
+                   install_rhel
+                   ;;
+  "fedoraproject") install_opencenter_yum_repo "Fedora"
+                   install_rhel
+                   ;;
 esac
 
 echo ""
