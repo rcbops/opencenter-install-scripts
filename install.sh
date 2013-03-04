@@ -68,21 +68,24 @@ function verify_apt_package_exists() {
 }
 
 function install_opencenter_yum_repo() {
-  echo "Adding OpenCenter yum repository"
+  releasever="6"
+  releasedir="Fedora"
+  case $1 in
+    "Fedora") releasever="17"; releasedir="Fedora" ;;
+    "CentOS") releasever="6"; releasedir="RedHat" ;;
+    "RedHat") releasever="6"; releasedir="RedHat" ;;
+  esac
+  echo "Adding OpenCenter yum repository $releasedir/$releasever"
   cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
 [rcb-utils]
 name=RCB Utility packages for OpenCenter $1
-baseurl=http://build.monkeypuppetlabs.com/repo-testing/$1/\$releasever/\$basearch/
+baseurl=http://build.monkeypuppetlabs.com/repo-testing/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
 gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
 EOF
-  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to add the RCB GPG key."
-    exit 1
-  fi
-  if [[ $1 = "Fedora" ]]; then
+  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key &>/dev/null || :
+  if [[ $1 == "Fedora" ]]; then
       echo "skipping epel installation for Fedora"
   else
       if (! rpm -q epel-release 2>&1>/dev/null ); then
@@ -245,6 +248,8 @@ function install_rpm() {
           exit 1
       fi
       chkconfig httpd on
+      current_IP=$( cat /etc/httpd/conf.d/opencenter-dashboard.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/httpd/conf.d/opencenter-dashboard.conf
       service httpd restart
   fi
 
@@ -339,7 +344,7 @@ then
   platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
   platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
 else
-  echo "Your platform is not supported.  Please let FIXME:RCB_EMAIL_HERE know"
+  echo "Your platform is not supported.  Please email RPCFeedback@rackspace.com and let us know."
   exit 1
 fi
 
@@ -355,10 +360,13 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "redhat"|"centos") install_opencenter_yum_repo "RedHat"
+  "redhat") install_opencenter_yum_repo "RedHat"
                    install_rpm
                    ;;
-  "fedora") install_opencenter_yum_repo "Fedora"
+  "centos") install_opencenter_yum_repo "CentOS"
+                   install_rpm
+                   ;;
+  "fedoraproject") install_opencenter_yum_repo "Fedora"
                    install_rpm
                    ;;
 esac
