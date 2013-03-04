@@ -245,6 +245,8 @@ function install_rpm() {
           exit 1
       fi
       chkconfig httpd on
+      current_IP=$( cat /etc/httpd/conf.d/opencenter-dashboard.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
+      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/httpd/conf.d/opencenter-dashboard.conf
       service httpd restart
   fi
 
