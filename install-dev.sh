@@ -393,7 +393,7 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "rhel"|"centos") install_rhel ;;
+  "redhat"|"centos") install_rhel ;;
   "fedora") install_fedora ;;
 esac
 
