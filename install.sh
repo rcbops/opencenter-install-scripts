@@ -79,13 +79,13 @@ function install_opencenter_yum_repo() {
   cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
 [rcb-utils]
 name=RCB Utility packages for OpenCenter $1
-baseurl=http://build.monkeypuppetlabs.com/repo-testing/$releasedir/$releasever/\$basearch/
+baseurl=$uri/stable/rpm/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
+gpgkey=$uri/stable/rpm/RPM-GPG-RCB.key
 EOF
-  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key &>/dev/null || :
-  if [[ $1 == "Fedora" ]]; then
+  rpm --import $uri/stable/rpm/RPM-GPG-RCB.key &>/dev/null || :
+  if [[ $1 = "Fedora" ]]; then
       echo "skipping epel installation for Fedora"
   else
       if (! rpm -q epel-release 2>&1>/dev/null ); then
@@ -298,8 +298,8 @@ VERBOSE=
 
 ####################
 # Package Variables
-uri="http://build.monkeypuppetlabs.com"
-pkg_path="/proposed-packages"
+uri="http://packages.opencenter.rackspace.com"
+pkg_path="/stable/deb/rcb-utils/"
 server_pkgs="opencenter-server python-opencenter opencenter-client"
 agent_pkgs="opencenter-agent"
 agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
