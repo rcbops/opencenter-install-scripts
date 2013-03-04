@@ -342,7 +342,7 @@ then
   platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
   platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
 else
-  echo "Your platform is not supported.  Please let FIXME:RCB_EMAIL_HERE know"
+  echo "Your platform is not supported.  Please email RPCFeedback@rackspace.com and let us know."
   exit 1
 fi
 
