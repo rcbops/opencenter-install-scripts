@@ -217,6 +217,8 @@ function install_rpm() {
           echo "Failed to install opencenter"
           exit 1
       fi
+      stop opencenter || :
+      start opencenter
   fi
 
   if [ "${ROLE}" != "dashboard" ]; then
@@ -232,6 +234,8 @@ function install_rpm() {
           echo "Failed to install opencenter-agent"
           exit 1
       fi
+      stop opencenter-agent || :
+      start opencenter-agent
   fi
 
   if [ "${ROLE}" == "dashboard" ]; then
@@ -240,17 +244,20 @@ function install_rpm() {
           echo "Failed to install Opencentre Dashboard"
           exit 1
       fi
+      chkconfig httpd on
+      service httpd restart
   fi
 
-  # FIXME(shep): This should really be debconf hackery instead
   if [ "${ROLE}" == "agent" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      /etc/init.d/opencenter-agent restart
+      stop opencenter-agent || :
+      start opencenter-agent
   elif [ "${ROLE}" == "server" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      /etc/init.d/opencenter-agent restart
+      stop opencenter-agent || :
+      start opencenter-agent
   fi
   iptables -F
 }
