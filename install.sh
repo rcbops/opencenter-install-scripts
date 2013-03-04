@@ -252,6 +252,7 @@ function install_rpm() {
       sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       /etc/init.d/opencenter-agent restart
   fi
+  iptables -F
 }
 
 function usage() {
@@ -347,7 +348,7 @@ esac
 # Run os dependent install functions
 case $platform in
   "ubuntu") install_ubuntu ;;
-  "rhel"|"centos") install_opencenter_yum_repo "RedHat"
+  "redhat"|"centos") install_opencenter_yum_repo "RedHat"
                    install_rpm
                    ;;
   "fedora") install_opencenter_yum_repo "Fedora"
