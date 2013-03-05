@@ -256,6 +256,9 @@ function install_rpm() {
           echo "Failed to install Opencentre Dashboard"
           exit 1
       fi
+      # the opencenter-dashboard package restarts httpd, so this is
+      # here for safety
+      sleep 15s
       chkconfig httpd on
       current_IP=$( cat /etc/httpd/conf.d/opencenter-dashboard.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/httpd/conf.d/opencenter-dashboard.conf
