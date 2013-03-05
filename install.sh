@@ -391,7 +391,7 @@ if [[ "${ROLE}" = "dashboard" ]]; then
       my_ip=$(ip a show dev `ip route | grep default | awk '{print $5}'` | grep "inet " | awk '{print $2}' | cut -d "/" -f 1)
       cat <<EOF
 
-Your OpenCenter dashboard is available at http://${my_ip}:${SERVER_PORT}
+Your OpenCenter dashboard is available at https://${my_ip}
 
 EOF
 fi
