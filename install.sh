@@ -151,6 +151,10 @@ function install_ubuntu() {
 
   if [ "${ROLE}" == "server" ]; then
       echo "Installing Opencenter-Server"
+      cat <<EOF | debconf-set-selections
+opencenter-agent opencenter/server string ${OPENCENTER_SERVER}
+opencenter-agent opencenter/port string ${SERVER_PORT}
+EOF
       if [[ ${PASSWORD} ]]; then
           cat <<EOF | debconf-set-selections
 opencenter opencenter/password string ${PASSWORD}
@@ -315,9 +319,9 @@ VERBOSE=
 # Package Variables
 uri="http://packages.opencenter.rackspace.com"
 pkg_path="/stable/deb/rcb-utils/"
-server_pkgs="opencenter-server python-opencenter opencenter-client"
+server_pkgs="opencenter-server python-opencenter opencenter-client opencenter-agent-output-adventurator"
 agent_pkgs="opencenter-agent"
-agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-adventurator opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
+agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
 dashboard_pkgs="opencenter-dashboard"
 ####################
 
