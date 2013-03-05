@@ -163,6 +163,10 @@ EOF
 
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Opencenter-Agent"
+      cat <<EOF | debconf-set-selections
+opencenter-agent opencenter/server string ${OPENCENTER_SERVER}
+opencenter-agent opencenter/port string ${SERVER_PORT}
+EOF
       if [[ ${PASSWORD} ]]; then
           cat <<EOF | debconf-set-selections
 opencenter-agent opencenter/password string ${PASSWORD}
@@ -211,17 +215,6 @@ EOF
       exit 1
     fi
   done
-
-  # FIXME(shep): This should really be debconf hackery instead
-  if [ "${ROLE}" == "agent" ]; then
-      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
-      sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      /etc/init.d/opencenter-agent restart
-  elif [ "${ROLE}" == "server" ]; then
-      current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
-      sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      /etc/init.d/opencenter-agent restart
-  fi
 }
 
 
