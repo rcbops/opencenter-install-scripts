@@ -387,7 +387,7 @@ Unless required by applicable law or agreed to in writing, software distributed 
 "
 echo "You have installed Opencenter. WooHoo!!"
 
-if [ "${ROLE}" == "dashboard" ];
+if [[ "${ROLE}" = "dashboard" ]]; then
       my_ip=$(ip a show dev `ip route | grep default | awk '{print $5}'` | grep "inet " | awk '{print $2}' | cut -d "/" -f 1)
       cat <<EOF
 
