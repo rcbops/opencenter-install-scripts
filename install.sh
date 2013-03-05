@@ -30,7 +30,7 @@ set -e
 ROLE="agent"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8443"
-USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
+USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP> [password]"
 
 if [ $# -ge 1 ]; then
     if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
@@ -45,6 +45,9 @@ if [ $# -ge 1 ]; then
         else
             echo "Invalid IP specified - Defaulting to 0.0.0.0"
             echo $USAGE
+        fi
+        if [[ $3 ]]; then
+            PASSWORD=$3
         fi
     fi
 fi
@@ -147,6 +150,11 @@ function install_ubuntu() {
 
   if [ "${ROLE}" == "server" ]; then
       echo "Installing Opencenter-Server"
+      if [[ ${PASSWORD} ]]; then
+          cat <<EOF | debconf-set-selections
+opencenter opencenter/password string ${PASSWORD}
+EOF
+      fi
       if ! ( ${aptget} install -y -q ${server_pkgs} ); then
           echo "Failed to install opencenter"
           exit 1
@@ -155,6 +163,11 @@ function install_ubuntu() {
 
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Opencenter-Agent"
+      if [[ ${PASSWORD} ]]; then
+          cat <<EOF | debconf-set-selections
+opencenter-agent opencenter/password string ${PASSWORD}
+EOF
+      fi
       if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
           echo "Failed to install opencenter-agent"
           exit 1
