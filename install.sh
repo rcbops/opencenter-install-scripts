@@ -244,6 +244,7 @@ function install_rpm() {
           echo "Failed to install opencenter-agent"
           exit 1
       fi
+      sed -i 's/admin:password/admin:${PASSWORD}/g' /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       stop opencenter-agent || :
       start opencenter-agent
   fi
@@ -268,6 +269,7 @@ function install_rpm() {
   elif [ "${ROLE}" == "server" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      sed -i 's/^admin_pass = password/admin = ${PASSWORD}/g' /etc/opencenter/opencenter.conf
       stop opencenter-agent || :
       start opencenter-agent
   fi
