@@ -108,8 +108,10 @@ gpgkey=$uri/stable/rpm/RPM-GPG-RCB.key
 EOF
   rpm --import $uri/stable/rpm/RPM-GPG-RCB.key &>/dev/null || :
   if [[ $1 = "Fedora" ]]; then
+      yum_opencenter_pkgs="$yum_opencenter_pkgs python-sqlalchemy"
       echo "skipping epel installation for Fedora"
   else
+      yum_opencenter_pkgs="$yum_opencenter_pkgs python-sqlalchemy0.7"
       if (! rpm -q epel-release 2>&1>/dev/null ); then
           rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
           if [[ $? -ne 0 ]]; then
@@ -345,7 +347,7 @@ uri="http://packages.opencenter.rackspace.com"
 pkg_path="/stable/deb/rcb-utils/"
 apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 apt_dashboard_pkgs="build-essential git"
-yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-sqlalchemy0.7 python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
+yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 yum_dashboard_pkgs="gcc gcc-c++ make kernel-devel git"
 ####################
 
