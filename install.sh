@@ -406,7 +406,7 @@ if [[ "${ROLE}" = "agent" ]]; then
     echo "  root = https://<username>:<password>@<opencenter-server-ip>:8443"
     echo "  admin = https://<username>:<password>@<opencenter-server-ip>:8443/admin"
     echo ""
-    echo "If you chagne this you must also update the agent endpoint"
+    echo "If you change this you must also update the agent endpoint"
     echo "configurations."
     echo ""
 fi
@@ -417,7 +417,7 @@ if [[ "${ROLE}" = "server" ]]; then
     echo "  admin_user = <admin username>"
     echo "  admin_pass = <admin password>"
     echo ""
-    echo "If you chagne this you must also update the agent endpoint"
+    echo "If you change this you must also update the agent endpoint"
     echo "configurations."
     echo ""
 fi
