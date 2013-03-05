@@ -24,7 +24,7 @@
 ##############################################################################
 #
 #
-# set -x
+set -x
 set -e
 
 ROLE="agent"
@@ -88,6 +88,7 @@ function verify_yum_package_exists() {
    fi
 }
 
+
 function install_opencenter_yum_repo() {
   releasever="6"
   releasedir="Fedora"
@@ -100,22 +101,22 @@ function install_opencenter_yum_repo() {
   cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
 [rcb-utils]
 name=RCB Utility packages for OpenCenter $1
-baseurl=http://build.monkeypuppetlabs.com/repo-testing/$releasedir/$releasever/\$basearch/
+baseurl=$uri/stable/rpm/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=http://build.monkeypuppetlabs.com/repo-testing/RPM-GPG-RCB.key
+gpgkey=$uri/stable/rpm/RPM-GPG-RCB.key
 EOF
-  rpm --import http://build.monkeypuppetlabs.com/repo/RPM-GPG-RCB.key &>/dev/null || :
-  if [[ $1 == "Fedora" ]]; then
-    echo "skipping epel installation for Fedora"
+  rpm --import $uri/stable/rpm/RPM-GPG-RCB.key &>/dev/null || :
+  if [[ $1 = "Fedora" ]]; then
+      echo "skipping epel installation for Fedora"
   else
-    if (! rpm -q epel-release 2>&1>/dev/null ); then
-      rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
-      if [[ $? -ne 0 ]]; then
-        echo "Unable to add the EPEL repository."
-        exit 1
+      if (! rpm -q epel-release 2>&1>/dev/null ); then
+          rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+          if [[ $? -ne 0 ]]; then
+            echo "Unable to add the EPEL repository."
+            exit 1
+          fi
       fi
-    fi
   fi
 }
 
@@ -274,7 +275,6 @@ function install_ubuntu() {
 function install_rhel() {
   echo "Installing on RHEL/CentOS"
   local yum=$(which yum)
-  install_opencenter_yum_repo "RedHat"
 
   if [ "${ROLE}" != "dashboard" ]; then
       echo "Installing Required Packages"
@@ -341,8 +341,8 @@ VERBOSE=
 
 ####################
 # Package Variables
-uri="http://build.monkeypuppetlabs.com"
-pkg_path="/proposed-packages"
+uri="http://packages.opencenter.rackspace.com"
+pkg_path="/stable/deb/rcb-utils/"
 apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 apt_dashboard_pkgs="build-essential git"
 yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-sqlalchemy0.7 python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
