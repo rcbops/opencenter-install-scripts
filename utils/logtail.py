@@ -44,7 +44,7 @@ def dump_info(endpoint, task_id):
     log_json = get_json(log.json)
 
     if (log.status_code >= 200 and log.status_code < 300):
-        txid = log.json['request']
+        txid = log.json()['request']
     else:
         print 'error getting transaction'
         sys.exit(1)
