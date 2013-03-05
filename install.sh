@@ -396,4 +396,25 @@ Your OpenCenter dashboard is available at https://${my_ip}
 EOF
 fi
 
+if [[ "${ROLE}" = "agent" ]]; then
+    echo "Agent username and password configurations are stored in"
+    echo "/etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf"
+    echo "  root = https://<username>:<password>@<opencenter-server-ip>:8443"
+    echo "  admin = https://<username>:<password>@<opencenter-server-ip>:8443/admin"
+    echo ""
+    echo "If you chagne this you must also update the agent endpoint"
+    echo "configurations."
+    echo ""
+fi
+if [[ "${ROLE}" = "server" ]]; then
+    echo "Server username and password configurations are stored in"
+    echo "/etc/opencenter/opencenter.conf"
+    echo "  admin_user = <admin username>"
+    echo "  admin_pass = <admin password>"
+    echo ""
+    echo "If you chagne this you must also update the agent endpoint"
+    echo "configurations."
+    echo ""
+fi
+
 exit
