@@ -397,6 +397,7 @@ EOF
 fi
 
 if [[ "${ROLE}" = "agent" ]]; then
+    echo ""
     echo "Agent username and password configurations are stored in"
     echo "/etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf"
     echo "  root = https://<username>:<password>@<opencenter-server-ip>:8443"
@@ -407,6 +408,7 @@ if [[ "${ROLE}" = "agent" ]]; then
     echo ""
 fi
 if [[ "${ROLE}" = "server" ]]; then
+    echo ""
     echo "Server username and password configurations are stored in"
     echo "/etc/opencenter/opencenter.conf"
     echo "  admin_user = <admin username>"
