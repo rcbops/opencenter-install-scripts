@@ -53,6 +53,7 @@ if [ $# -ge 1 ]; then
 fi
 
 VERSION="1.0.0"
+PASSWORD=${PASSWORD:-password}
 
 function verify_apt_package_exists() {
   # $1 - name of package to test
