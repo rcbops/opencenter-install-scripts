@@ -276,6 +276,8 @@ function install_rpm() {
       sed -i "s/^admin_pass = password/admin_pass = ${PASSWORD}/g" /etc/opencenter/opencenter.conf
       stop opencenter-agent || :
       start opencenter-agent
+      stop opencenter
+      start opencenter
   fi
   iptables -F
 }
