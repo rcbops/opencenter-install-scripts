@@ -183,6 +183,7 @@ EOF
           echo "Failed to install opencenter-agent"
           exit 1
       fi
+      /etc/init.d/opencenter-agent restart
   fi
 
   if [ "${ROLE}" == "dashboard" ]; then
