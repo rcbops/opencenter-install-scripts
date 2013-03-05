@@ -31,6 +31,7 @@ declare -A PIDS
 
 #command to use for nova; read from environment or "nova" by default.
 #This is so you can set NOVA="supernova env" before running the script.
+OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
 NOVA=${NOVA:-nova}
 RERUN=${RERUN:-false}
 USE_PACKAGES=false
@@ -231,7 +232,7 @@ function setup_server_as() {
         scp ${SSHOPTS} ${HOME}/.screenrc root@$(ip_for ${server}):/root/.screenrc
     fi
 
-    ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip}"
+    ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip} ${OPENCENTER_PASSWORD}"
     if !( $USE_PACKAGES ); then
         echo "removing github key"
         ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
