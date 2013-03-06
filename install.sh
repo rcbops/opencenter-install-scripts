@@ -208,6 +208,7 @@ function install_rpm() {
 
   if [ "${ROLE}" == "server" ]; then
       echo "Installing Opencenter-Server"
+      server_pkgs="$server_pkgs mod_ssl"
       if ! ( yum install -y -q ${server_pkgs} ); then
           echo "Failed to install opencenter"
           exit 1
@@ -381,7 +382,7 @@ OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"password"}
 # Package Variables
 uri="http://packages.opencenter.rackspace.com"
 pkg_path="/stable/deb/rcb-utils/"
-server_pkgs="opencenter-server python-opencenter opencenter-client opencenter-agent-output-adventurator mod_ssl"
+server_pkgs="opencenter-server python-opencenter opencenter-client opencenter-agent-output-adventurator"
 agent_pkgs="opencenter-agent"
 agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
 dashboard_pkgs="opencenter-dashboard"

@@ -83,10 +83,20 @@ Pushing updates to the Cluster
 From within "opencenter", "opencenter-agent", "opencenter-client", "opencenter-dashboard" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./utils/push.sh <Cluster-Name> <repo> <repo path>
-    <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
-    <repo> possible options: [opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard]
-    <repo path> can be left blank if you are within one of the directories, otherwise specify the path
+    ./utils/push.sh <arguments/options>
+
+    OPTIONS:
+       -h --help  Show this message
+       -v --verbose  Verbose output
+       -V --version  Output the version of this script
+
+    ARGUMENTS:
+       -p --prefix=<Cluster Prefix>
+            Specify the name prefix for the cluster - default "c1"
+       -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
+            Specify the projects to push - defaults to opencenter-all
+       -r --repo-path=<Local path to repositories>
+            Specify the local path to your repositories
 
  Tailing Task Logs on Opencenter servers:
 -----------------------
