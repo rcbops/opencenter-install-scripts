@@ -208,7 +208,6 @@ function install_rpm() {
 
   if [ "${ROLE}" == "server" ]; then
       echo "Installing Opencenter-Server"
-      server_pkgs="$server_pkgs mod_ssl"
       if ! ( yum install -y -q ${server_pkgs} ); then
           echo "Failed to install opencenter"
           exit 1
