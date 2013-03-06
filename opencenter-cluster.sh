@@ -293,22 +293,22 @@ usage: $0 options
 This script will install opencenter packages.
 
 OPTIONS:
-  -h  Show this message
-  -v  Verbose output
-  -V  Output the version of this script
+  -h --help  Show this message
+  -v --verbose  Verbose output
+  -V --version  Output the version of this script
 
 ARGUMENTS:
-  --prefix=<Cluster Prefix>
+  -p= --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
-  --clients=<Number of Clients>
+  -c= --clients=<Number of Clients>
          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
-  --password=<Opencenter Server Password>
+  -pass= --password=<Opencenter Server Password>
          Specify the Opencenter Server Password - only used for package installs - default "opencentre"
-  --packages
+  -pkg --packages
          Install using packages
-  --network=<CIDR>
+  -n= --network=<CIDR>
          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
-  --os=[redhat | centos | ubuntu | fedora ]
+  -o= --os=[redhat | centos | ubuntu | fedora ]
          Specify the OS to install on the servers - default ubuntu
 EOF
 }
@@ -374,10 +374,10 @@ for arg in $@; do
     flag=$(echo $arg | cut -d "=" -f1)
     value=$(echo $arg | cut -d "=" -f2)
     case $flag in
-        "--prefix")
+        "--prefix" | "-p")
             CLUSTER_PREFIX=$value
             ;;
-        "--network")
+        "--network" | "-n")
             if ( echo $value | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1 ); then
                 PRIV_NETWORK=$value
                 create_network
@@ -387,10 +387,10 @@ for arg in $@; do
                 exit 1
             fi
             ;;
-        "--password")
+        "--password" | "-pass")
             OPENCENTER_PASSWORD=$value
             ;;
-        "--clients")
+        "--clients" | "-c")
             if [ $value -eq $value 2>/dev/null ]; then
                 CLIENT_COUNT=$value
             else
@@ -398,13 +398,13 @@ for arg in $@; do
                 exit 1
             fi
             ;;
-        "--packages")
+        "--packages" | "-pkg")
             USE_PACKAGES=true
             DASHBOARD_PORT=443
             server_port=8443
             DASHBOARD_PROTO=https
             ;;
-        "--os")
+        "--os" | "-o")
             value=$(echo $value | tr "[:upper:]" "[:lower:]")
             if [ $value != "centos" ] && [ $value != "redhat" ] && [ $value != "fedora" ] && [ $value != "ubuntu" ]; then
                 echo "Invalid OS type specified"
@@ -418,11 +418,11 @@ for arg in $@; do
             usage
             exit 1
             ;;
-        "-v" | "--verbose")
+        "--verbose" | "-v")
             VERBOSE=1
             set -x
             ;;
-        "-V")
+        "--version" | "-V")
             display_version
             exit 1
             ;;

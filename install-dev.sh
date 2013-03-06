@@ -298,14 +298,14 @@ usage: $0 options
 This script will install opencenter packages.
 
 OPTIONS:
-  -h  Show this message
-  -v  Verbose output
-  -V  Display script version
+  -h --help  Show this message
+  -v --verbose  Verbose output
+  -V --version  Display script version
 
 ARGUMENTS:
-  --role=[server | agent | dashboard]
+  -r --role=[server | agent | dashboard]
          Specify the role of the node - defaults to "agent"
-  --ip=<Opencenter Server IP>
+  -i --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
 EOF
 }
@@ -391,7 +391,7 @@ for arg in $@; do
     flag=$(echo $arg | cut -d "=" -f1)
     value=$(echo $arg | cut -d "=" -f2)
     case $flag in
-        "--role")
+        "--role" | "-r")
             if [ $value != "server" ] && [ $value != "agent" ] && [ $value != "dashboard" ]; then
                 echo "Invalid Role specified - defaulting to agent"
                 usage
@@ -399,7 +399,7 @@ for arg in $@; do
                 ROLE=$value
             fi
             ;;
-        "--ip")
+        "--ip" | "-i")
             if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
                 OPENCENTER_SERVER=$value
             else
@@ -412,11 +412,11 @@ for arg in $@; do
             usage
             exit 1
             ;;
-        "-v" | "--verbose")
+        "--verbose" | "-v")
             VERBOSE=1
             set -x
             ;;
-        "-V")
+        "--version" | "-V")
             display_version
             exit 1
             ;;

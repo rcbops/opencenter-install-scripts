@@ -10,22 +10,22 @@ Installing Opencenter Cluster
     ./opencenter-cluster.sh
 
     OPTIONS:
-      -h  Show this message
-      -v  Verbose output
-      -V  Output the version of this script
+      -h --help  Show this message
+      -v --verbose  Verbose output
+      -V --version  Output the version of this script
 
     ARGUMENTS:
-      --prefix=<Cluster Prefix>
+      -p --prefix=<Cluster Prefix>
           Specify the name prefix for the cluster - default "c1"
-      --clients=<Number of Clients>
+      -c --clients=<Number of Clients>
           Specify the number of clients to install, in conjunction with a server & dashboard - default 2
-      --password=<Opencenter Server Password>
+      -pass --password=<Opencenter Server Password>
           Specify the Opencenter Server Password - only used for package installs - default "opencentre"
-      --packages
+      -pkg --packages
           Install using packages
-      --network=<CIDR>
+      -n --network=<CIDR>
           Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
-      --os=[redhat | centos | ubuntu | fedora ]
+      -o --os=[redhat | centos | ubuntu | fedora ]
           Specify the OS to install on the servers - default ubuntu
 
 * Number of Clients defaults to 2 if left unspecified
@@ -57,16 +57,16 @@ Installing individual servers
     curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s <options/arguments>
 
     OPTIONS:
-      -h  Show this message
-      -v  Verbose output
-      -V  Output the version of this script
+      -h --help  Show this message
+      -v --verbose  Verbose output
+      -V --version  Output the version of this script
 
     ARGUMENTS:
-      --role=[agent | server | dashboard]
+      -r --role=[agent | server | dashboard]
              Specify the role of the node - defaults to "agent"
-      --ip=<Opencenter Server IP>
+      -i --ip=<Opencenter Server IP>
              Specify the Opencenter Server IP - defaults to "0.0.0.0"
-      --password=<Opencenter Server IP>
+      -p --password=<Opencenter Server IP>
              Specify the Opencenter Server Password - defaults to "password"
 
 * NB This doesn't have the same pre-requisites
