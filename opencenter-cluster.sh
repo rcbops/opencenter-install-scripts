@@ -72,7 +72,7 @@ function wait_for_ip() {
 
     echo "Waiting for IPv4 on ${server}"
 
-    while ( ! $NOVA list | grep ${server} | grep -q "ERROR" ); do
+    while ! ( $NOVA list | grep ${server} | grep -q "ERROR" ); do
         ip=$(ip_for ${server});
         if [ "${ip}" == "" ]; then
             sleep 20
@@ -137,6 +137,18 @@ function wait_for_ssh() {
         sleep 10
     done
     echo "Login successful"
+
+    #redhat servers become accessible before setup is complete
+    count=0
+    while !( $NOVA list | grep ${server} | grep -q "ACTIVE" ); do
+        count=$(( count + 1 ))
+        if [ ${count} -gt ${max_count} ]; then
+            echo "timeout waiting for server to become ACTIVE"
+            exit 1
+        fi
+        sleep 10
+    done
+    echo "Server Active"
 }
 
 function setup_server_as() {

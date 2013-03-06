@@ -99,6 +99,15 @@ function install_opencenter_apt_repo() {
   fi
 }
 
+function adjust_iptables() {
+    if [ "${ROLE}" == "server" ]; then
+        iptables -I INPUT 1 -p tcp --dport 8443 -j ACCEPT
+        iptables-save
+    elif [ "${ROLE}" == "dashboard" ]; then
+        iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
+        iptables-save
+    fi
+}
 
 function install_ubuntu() {
   local aptget=$(which apt-get)
@@ -254,7 +263,7 @@ function install_rpm() {
       stop opencenter
       start opencenter
   fi
-  iptables -F
+  adjust_iptables
 }
 
 
@@ -271,11 +280,11 @@ OPTIONS:
 
 ARGUMENTS:
   --role=[agent | server | dashboard]
-         Specify the role of the node
+         Specify the role of the node - defaults to "agent"
   --ip=<Opencenter Server IP>
-         Specify the Opencenter Server IP
+         Specify the Opencenter Server IP - defaults to "0.0.0.0"
   --password=<Opencenter Server IP>
-         Specify the Opencenter Server Password
+         Specify the Opencenter Server Password - defaults to "password"
 EOF
 }
 

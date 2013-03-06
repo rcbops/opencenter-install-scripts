@@ -118,6 +118,15 @@ function install_apt_repo() {
   fi
 }
 
+function adjust_iptables() {
+    if [ "${ROLE}" == "server" ]; then
+        iptables -I INPUT 1 -p tcp --dport 8080 -j ACCEPT
+        iptables-save
+    elif [ "${ROLE}" == "dashboard" ]; then
+        iptables -I INPUT 1 -p tcp --dport 3000 -j ACCEPT
+        iptables-save
+    fi
+}
 function do_git_update() {
     # $1 = repo name
     repo=$1
@@ -279,7 +288,7 @@ function install_rhel() {
   done
 
   git_setup
-  iptables -F
+  adjust_iptables
 }
 
 function usage() {
@@ -295,9 +304,9 @@ OPTIONS:
 
 ARGUMENTS:
   --role=[server | agent | dashboard]
-         Specify the role of the node
+         Specify the role of the node - defaults to "agent"
   --ip=<Opencenter Server IP>
-         Specify the Opencenter Server IP
+         Specify the Opencenter Server IP - defaults to "0.0.0.0"
 EOF
 }
 
