@@ -23,7 +23,6 @@
 #
 ##############################################################################
 #
-#
 set -e
 set -u
 
@@ -232,7 +231,7 @@ function setup_server_as() {
         scp ${SSHOPTS} ${HOME}/.screenrc root@$(ip_for ${server}):/root/.screenrc
     fi
 
-    ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${as} ${ip} ${OPENCENTER_PASSWORD}"
+    ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     if !( $USE_PACKAGES ); then
         echo "removing github key"
         ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'

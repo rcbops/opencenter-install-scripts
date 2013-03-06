@@ -24,36 +24,7 @@
 ##############################################################################
 #
 #
-# set -x
 set -e
-
-ROLE="agent"
-OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
-SERVER_PORT="8443"
-USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP> [password]"
-
-if [ $# -ge 1 ]; then
-    if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
-        echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo $USAGE
-    else
-        ROLE=$1
-    fi
-    if [ $# -ge 2 ]; then
-        if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
-            OPENCENTER_SERVER=$2
-        else
-            echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo $USAGE
-        fi
-        if [[ $3 ]]; then
-            PASSWORD=$3
-        fi
-    fi
-fi
-
-VERSION="1.0.0"
-PASSWORD=${PASSWORD:-password}
 
 function verify_apt_package_exists() {
   # $1 - name of package to test
@@ -286,6 +257,7 @@ function install_rpm() {
   iptables -F
 }
 
+
 function usage() {
 cat <<EOF
 usage: $0 options
@@ -295,6 +267,15 @@ This script will install opencenter packages.
 OPTIONS:
   -h  Show this message
   -v  Verbose output
+  -V  Output the version of this script
+
+ARGUMENTS:
+  --role=[agent | server | dashboard]
+         Specify the role of the node
+  --ip=<Opencenter Server IP>
+         Specify the Opencenter Server IP
+  --password=<Opencenter Server IP>
+         Specify the Opencenter Server IP
 EOF
 }
 
@@ -309,10 +290,14 @@ EOF
 ################################################
 # -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
 ################################################
-
 ####################
-# Global Variables
+# Global Variables #
 VERBOSE=
+ROLE="agent"
+OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
+SERVER_PORT="8443"
+VERSION="1.0.0"
+PASSWORD=${PASSWORD:-password}
 ####################
 
 ####################
@@ -333,24 +318,47 @@ apt_file_name="${apt_repo}.list"
 apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
 ####################
 
-# Parse options
-while getopts "hvV" option
-do
-  case $option in
-    h)
-      usage
-      exit 1
-      ;;
-    v) VERBOSE=1 ;;
-    V)
-      display_version
-      exit 1
-      ;;
-    ?)
-      usage
-      exit 1
-      ;;
-  esac
+for arg in $@; do
+    flag=$(echo $arg | cut -d "=" -f1)
+    value=$(echo $arg | cut -d "=" -f2)
+    case $flag in
+        "--role")
+            if [ $value != "server" ] && [ $value != "agent" ] && [ $value != "dashboard" ]; then
+                echo "Invalid Role specified - defaulting to agent"
+                usage
+            else
+                ROLE=$value
+            fi
+            ;;
+        "--ip")
+            if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
+                OPENCENTER_SERVER=$value
+            else
+                echo "Invalid IP specified - exiting"
+                usage
+                exit 1
+            fi
+            ;;
+        "--password")
+           OPENCENTER_PASSWORD="$value"
+           ;;
+        "--help" | "-h")
+            usage
+            exit 1
+            ;;
+        "-v")
+            VERBOSE=1
+            set -x
+            ;;
+        "-V")
+            display_version
+            exit 1
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
 done
 
 arch=$(uname -m)
