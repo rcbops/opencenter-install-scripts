@@ -298,17 +298,17 @@ OPTIONS:
   -V --version  Output the version of this script
 
 ARGUMENTS:
-  -p= --prefix=<Cluster Prefix>
+  -p --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
-  -c= --clients=<Number of Clients>
+  -c --clients=<Number of Clients>
          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
-  -pass= --password=<Opencenter Server Password>
+  -pass --password=<Opencenter Server Password>
          Specify the Opencenter Server Password - only used for package installs - default "opencentre"
   -pkg --packages
          Install using packages
-  -n= --network=<CIDR>
+  -n --network=<CIDR>
          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
-  -o= --os=[redhat | centos | ubuntu | fedora ]
+  -o --os=[redhat | centos | ubuntu | fedora ]
          Specify the OS to install on the servers - default ubuntu
 EOF
 }
