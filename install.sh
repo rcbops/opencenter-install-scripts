@@ -381,7 +381,7 @@ OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"password"}
 # Package Variables
 uri="http://packages.opencenter.rackspace.com"
 pkg_path="/stable/deb/rcb-utils/"
-server_pkgs="opencenter-server python-opencenter opencenter-client opencenter-agent-output-adventurator"
+server_pkgs="opencenter-server python-opencenter opencenter-client opencenter-agent-output-adventurator mod_ssl"
 agent_pkgs="opencenter-agent"
 agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
 dashboard_pkgs="opencenter-dashboard"
