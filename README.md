@@ -7,7 +7,26 @@ You can use the individual scripts to install the components on servers rather t
 Installing Opencenter Cluster
 -----------------------
 
-    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> [--packages] [--network(=<CIDR>)]
+    ./opencenter-cluster.sh
+
+    OPTIONS:
+      -h  Show this message
+      -v  Verbose output
+      -V  Output the version of this script
+
+    ARGUMENTS:
+      --prefix=<Cluster Prefix>
+          Specify the name prefix for the cluster - default "c1"
+      --clients=<Number of Clients>
+          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
+      --password=<Opencenter Server Password>
+          Specify the Opencenter Server Password - only used for package installs - default "opencentre"
+      --packages
+          Install using packages
+      --network=<CIDR>
+          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
+      --os=[redhat | centos | ubuntu | fedora ]
+          Specify the OS to install on the servers - default ubuntu
 
 * Number of Clients defaults to 2 if left unspecified
 * If you are using opencenter-client locally you can set your endpoint:
@@ -35,8 +54,20 @@ Prerequisities
 Installing individual servers
 -----------------------
 
-    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s [server | agent | dashboard] <SERVER IP>
-    Defaults to "agent" 0.0.0.0
+    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s <options/arguments>
+
+    OPTIONS:
+      -h  Show this message
+      -v  Verbose output
+      -V  Output the version of this script
+
+    ARGUMENTS:
+      --role=[agent | server | dashboard]
+             Specify the role of the node - defaults to "agent"
+      --ip=<Opencenter Server IP>
+             Specify the Opencenter Server IP - defaults to "0.0.0.0"
+      --password=<Opencenter Server IP>
+             Specify the Opencenter Server Password - defaults to "password"
 
 * NB This doesn't have the same pre-requisites
 Wiping the Cluster 
