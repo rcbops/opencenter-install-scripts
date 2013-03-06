@@ -175,7 +175,7 @@ function push_opencenter_dashboard() {
     ssh ${SSHOPTS} root@${ip} '/bin/bash -c "source /root/.profile;cd /root/opencenter-dashboard; make publish; ./dashboard"' >&99 2>&1
 }
 
-nodes=$($NOVA list |grep -o "${CLUSTER_PREFIX}-[a-zA-Z0-9_-]*" )
+nodes=$($NOVA list | awk "\$4~/^\\s*${CLUSTER_PREFIX}-/{print \$4}")
 for node in ${nodes}; do
     IPADDRS[$node]=$(ip_for ${node})
 done
