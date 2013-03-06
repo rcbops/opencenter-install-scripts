@@ -36,6 +36,23 @@ function mangle_name() {
     fi
 }
 
+function get_image_type() {
+    case $1 in
+        "ubuntu") 
+            IMAGE_TYPE="12.04 LTS"
+            ;;
+        "redhat")
+            IMAGE_TYPE="Red Hat Enterprise Linux 6.1"
+            ;;
+        "centos")
+            IMAGE_TYPE="CentOS 6.3"
+            ;;
+        "fedora")
+            IMAGE_TYPE="Fedora 17"
+            ;;
+    esac
+}
+
 function ip_for() {
     server=$(mangle_name $1)
 
@@ -157,7 +174,6 @@ function setup_server_as() {
     else
         ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     fi
-
 }
 
 function credentials_check(){
@@ -271,15 +287,17 @@ OPTIONS:
 
 ARGUMENTS:
   --prefix=<Cluster Prefix>
-         Specify the name prefix for the cluster
+         Specify the name prefix for the cluster - default "c1"
   --clients=<Number of Clients>
-         Specify the number of clients to install, in conjunction with a server & dashboard
+         Specify the number of clients to install, in conjunction with a server & dashboard - default 2
   --password=<Opencenter Server Password>
-         Specify the Opencenter Server Password - only used for package installs
+         Specify the Opencenter Server Password - only used for package installs - default "opencentre"
   --packages
          Install using packages
   --network=<CIDR>
-         Setup a private cloud networks, will require "nova network-create" command
+         Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
+  --os=[redhat | centos | ubuntu | fedora ]
+         Specify the OS to install on the servers - default ubuntu
 EOF
 }
 
@@ -288,6 +306,28 @@ function display_version() {
 cat <<EOF
 $0 (version: $VERSION)
 EOF
+}
+
+function licensing() {
+   echo ""
+   echo "
+OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
+OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at: https://github.com/rcbops/opencenter/ or upon written request.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"
+}
+
+function display_info() {
+    server_ip=$(ip_for opencenter-server)
+    auth_string=""
+    if ( $USE_PACKAGES ); then
+        auth_string="admin:$OPENCENTER_PASSWORD@"
+    fi
+    echo -e "\n*** COMPLETE ***\n"
+    echo -e "Run \"export OPENCENTER_ENDPOINT=${DASHBOARD_PROTO}://${auth_string}${server_ip}:${server_port}\" to use the opencentercli"
+    dashboard_ip=$(ip_for opencenter-dashboard)
+    echo -e "Or connect to \"${DASHBOARD_PROTO}://${dashboard_ip}:${DASHBOARD_PORT}\" to manage via the opencenter-dashboard interface\n"
 }
 
 ####################
@@ -309,6 +349,7 @@ fi
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 DASHBOARD_PORT=3000
 DASHBOARD_PROTO=http
+server_port=8080
 USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network(=<CIDR>)]"
 IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 VERSION=1.0.0
@@ -325,8 +366,8 @@ for arg in $@; do
             CLUSTER_PREFIX=$value
             ;;
         "--network")
-            if ( echo $net_range | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1); then
-                PRIV_NETWORK=$net_range
+            if ( echo $value | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1 ); then
+                PRIV_NETWORK=$value
                 create_network
             else
                 echo "Invalid IP CIDR range specified"
@@ -335,24 +376,38 @@ for arg in $@; do
             fi
             ;;
         "--password")
-           OPENCENTER_PASSWORD="$value"
-           ;;
+            OPENCENTER_PASSWORD=$value
+            echo $OPENCENTER_PASSWORD
+            ;;
         "--clients")
-           if [ $2 -eq $2 2>/dev/null ]; then
-               CLIENT_COUNT=$value
-           else
-               usage
-               exit 1
-           fi
+            if [ $value -eq $value 2>/dev/null ]; then
+                CLIENT_COUNT=$value
+            else
+                usage
+                exit 1
+            fi
+            ;;
         "--packages")
-           USE_PACKAGES=true
-           DASHBOARD_PORT=443
-           DASHBOARD_PROTO=https
+            USE_PACKAGES=true
+            DASHBOARD_PORT=443
+            server_port=8443
+            DASHBOARD_PROTO=https
+            ;;
+        "--os")
+            value=$(echo $value | tr "[:upper:]" "[:lower:]")
+            if [ $value != "centos" ] && [ $value != "redhat" ] && [ $value != "fedora" ] && [ $value != "ubuntu" ]; then
+                echo "Invalid OS type specified"
+                usage
+                exit 1
+            else
+                get_image_type $value
+            fi
+            ;;
         "--help" | "-h")
             usage
             exit 1
             ;;
-        "-v")
+        "-v" | "--verbose")
             VERBOSE=1
             set -x
             ;;
@@ -361,6 +416,7 @@ for arg in $@; do
             exit 1
             ;;
         *)
+            echo "Invalid option $flag"
             usage
             exit 1
             ;;
@@ -370,10 +426,7 @@ done
 credentials_check
 boot_instances
 server_setup
+licensing
+display_info
 
-
-server_ip=$(ip_for opencenter-server)
-echo -e "\n*** COMPLETE ***\n"
-echo -e "Run \"export OPENCENTER_ENDPOINT=${DASHBOARD_PROTO}://${server_ip}:8080\" to use the opencentercli"
-dashboard_ip=$(ip_for opencenter-dashboard)
-echo -e "Or connect to \"${DASHBOARD_PROTO}://${dashboard_ip}:${DASHBOARD_PORT}\" to manage via the opencenter-dashboard interface\n"
+exit

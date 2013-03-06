@@ -308,6 +308,46 @@ $0 (version: $VERSION)
 EOF
 }
 
+function get_platform() {
+    arch=$(uname -m)
+    if [ -f "/etc/lsb-release" ];
+    then
+        platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
+        platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
+    elif [ -f "/etc/system-release-cpe" ];
+    then
+        platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
+        platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
+    fi
+
+    # On ubuntu the version number needs to be mapped to a name
+    case $platform_version in
+        "12.04") platform_name="precise" ;;
+    esac
+}
+
+function licensing() {
+    echo ""
+    echo "
+OpenCenter™ is Copyright 2013 by Rackspace US, Inc.
+OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at:  <OpenCenter Source Repository> or upon written request.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"
+}
+
+
+function display_info() {
+    echo "You have installed Opencenter. WooHoo!!"
+    if [[ "${ROLE}" = "dashboard" ]]; then
+        my_ip=$(ip a show dev `ip route | grep default | awk '{print $5}'` | grep "inet " | awk '{print $2}' | cut -d "/" -f 1)
+        cat <<EOF
+
+Your OpenCenter dashboard is available at http://${my_ip}
+
+EOF
+    fi
+}
 
 ################################################
 # -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
@@ -363,7 +403,7 @@ for arg in $@; do
             usage
             exit 1
             ;;
-        "-v")
+        "-v" | "--verbose")
             VERBOSE=1
             set -x
             ;;
@@ -372,6 +412,7 @@ for arg in $@; do
             exit 1
             ;;
         *)
+            echo "Invalid Option $flag"
             usage
             exit 1
             ;;
@@ -380,21 +421,8 @@ done
 
 export DEBIAN_FRONTEND=noninteractive
 
-arch=$(uname -m)
-if [ -f "/etc/lsb-release" ];
-then
-  platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
-  platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
-elif [ -f "/etc/system-release-cpe" ];
-then
-  platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
-  platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
-fi
+get_platform
 
-# On ubuntu the version number needs to be mapped to a name
-case $platform_version in
-  "12.04") platform_name="precise" ;;
-esac
 
 # echo "Arch: ${arch}"
 # echo "Platform: ${platform}"
@@ -414,12 +442,7 @@ case $platform in
                    ;;
 esac
 
-echo ""
-echo "
-OpenCenter™ is Copyright 2013 by Rackspace US, Inc.
-OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at:  <OpenCenter Source Repository> or upon written request.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-"
-echo "You have installed Opencenter. WooHoo!!"
+licensing
+display_info
+
 exit

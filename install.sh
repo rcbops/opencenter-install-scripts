@@ -126,9 +126,9 @@ function install_ubuntu() {
 opencenter-agent opencenter/server string ${OPENCENTER_SERVER}
 opencenter-agent opencenter/port string ${SERVER_PORT}
 EOF
-      if [[ ${PASSWORD} ]]; then
+      if [[ ${OPENCENTER_PASSWORD} ]]; then
           cat <<EOF | debconf-set-selections
-opencenter opencenter/password string ${PASSWORD}
+opencenter opencenter/password string ${OPENCENTER_PASSWORD}
 EOF
       fi
       if ! ( ${aptget} install -y -q ${server_pkgs} ); then
@@ -143,9 +143,9 @@ EOF
 opencenter-agent opencenter/server string ${OPENCENTER_SERVER}
 opencenter-agent opencenter/port string ${SERVER_PORT}
 EOF
-      if [[ ${PASSWORD} ]]; then
+      if [[ ${OPENCENTER_PASSWORD} ]]; then
           cat <<EOF | debconf-set-selections
-opencenter-agent opencenter/password string ${PASSWORD}
+opencenter-agent opencenter/password string ${OPENCENTER_PASSWORD}
 EOF
       fi
       if ! ( ${aptget} install -y -q ${agent_pkgs} ); then
@@ -220,7 +220,7 @@ function install_rpm() {
           echo "Failed to install opencenter-agent"
           exit 1
       fi
-      sed -i "s/admin:password/admin:${PASSWORD}/g" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      sed -i "s/admin:password/admin:${OPENCENTER_PASSWORD}/g" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       stop opencenter-agent || :
       start opencenter-agent
   fi
@@ -248,7 +248,7 @@ function install_rpm() {
   elif [ "${ROLE}" == "server" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      sed -i "s/^admin_pass = password/admin_pass = ${PASSWORD}/g" /etc/opencenter/opencenter.conf
+      sed -i "s/^admin_pass = password/admin_pass = ${OPENCENTER_PASSWORD}/g" /etc/opencenter/opencenter.conf
       stop opencenter-agent || :
       start opencenter-agent
       stop opencenter
@@ -286,6 +286,74 @@ $0 (version: $VERSION)
 EOF
 }
 
+function get_platform() {
+    arch=$(uname -m)
+    if [ -f "/etc/lsb-release" ];
+    then
+        platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
+        platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
+    elif [ -f "/etc/system-release-cpe" ];
+    then
+        platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
+        platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
+    else
+        echo "Your platform is not supported.  Please email RPCFeedback@rackspace.com and let us know."
+        exit 1
+    fi
+
+    # On ubuntu the version number needs to be mapped to a name
+    case $platform_version in
+        "12.04") platform_name="precise" ;;
+    esac
+}
+
+function licensing() {
+    echo ""
+
+    echo "
+OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
+OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at: https://github.com/rcbops/opencenter/ or upon written request.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"
+}
+
+function display_info() {
+    echo "You have installed Opencenter. WooHoo!!"
+
+    if [[ "${ROLE}" = "dashboard" ]]; then
+        my_ip=$(ip a show dev `ip route | grep default | awk '{print $5}'` | grep "inet " | awk '{print $2}' | cut -d "/" -f 1)
+        cat <<EOF
+
+Your OpenCenter dashboard is available at https://${my_ip}
+
+EOF
+fi
+
+    if [[ "${ROLE}" = "agent" ]]; then
+        echo ""
+        echo "Agent username and password configurations are stored in"
+        echo "/etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf"
+        echo "  root = https://<username>:<password>@<opencenter-server-ip>:8443"
+        echo "  admin = https://<username>:<password>@<opencenter-server-ip>:8443/admin"
+        echo ""
+        echo "If you change this you must also update the agent endpoint"
+        echo "configurations."
+        echo ""
+    fi
+    if [[ "${ROLE}" = "server" ]]; then
+        echo ""
+        echo "Server username and password configurations are stored in"
+        echo "/etc/opencenter/opencenter.conf"
+        echo "  admin_user = <admin username>"
+        echo "  admin_pass = <admin password>"
+        echo ""
+        echo "If you change this you must also update the agent endpoint"
+        echo "configurations."
+        echo ""
+    fi
+}
+
 
 ################################################
 # -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
@@ -297,7 +365,7 @@ ROLE="agent"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8443"
 VERSION="1.0.0"
-PASSWORD=${PASSWORD:-password}
+OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"password"}
 ####################
 
 ####################
@@ -340,13 +408,13 @@ for arg in $@; do
             fi
             ;;
         "--password")
-           OPENCENTER_PASSWORD="$value"
+           OPENCENTER_PASSWORD=$value
            ;;
         "--help" | "-h")
             usage
             exit 1
             ;;
-        "-v")
+        "-v" | "--verbose")
             VERBOSE=1
             set -x
             ;;
@@ -355,30 +423,14 @@ for arg in $@; do
             exit 1
             ;;
         *)
+            echo "Invalid Option $flag"
             usage
             exit 1
             ;;
     esac
 done
 
-arch=$(uname -m)
-if [ -f "/etc/lsb-release" ];
-then
-  platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
-  platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
-elif [ -f "/etc/system-release-cpe" ];
-then
-  platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
-  platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
-else
-  echo "Your platform is not supported.  Please email RPCFeedback@rackspace.com and let us know."
-  exit 1
-fi
-
-# On ubuntu the version number needs to be mapped to a name
-case $platform_version in
-  "12.04") platform_name="precise" ;;
-esac
+get_platform
 
 # echo "Arch: ${arch}"
 # echo "Platform: ${platform}"
@@ -398,45 +450,7 @@ case $platform in
                    ;;
 esac
 
-echo ""
-echo "
-OpenCenter(TM) is Copyright 2013 by Rackspace US, Inc.
-OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at: https://github.com/rcbops/opencenter/ or upon written request.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-"
-echo "You have installed Opencenter. WooHoo!!"
-
-if [[ "${ROLE}" = "dashboard" ]]; then
-      my_ip=$(ip a show dev `ip route | grep default | awk '{print $5}'` | grep "inet " | awk '{print $2}' | cut -d "/" -f 1)
-      cat <<EOF
-
-Your OpenCenter dashboard is available at https://${my_ip}
-
-EOF
-fi
-
-if [[ "${ROLE}" = "agent" ]]; then
-    echo ""
-    echo "Agent username and password configurations are stored in"
-    echo "/etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf"
-    echo "  root = https://<username>:<password>@<opencenter-server-ip>:8443"
-    echo "  admin = https://<username>:<password>@<opencenter-server-ip>:8443/admin"
-    echo ""
-    echo "If you change this you must also update the agent endpoint"
-    echo "configurations."
-    echo ""
-fi
-if [[ "${ROLE}" = "server" ]]; then
-    echo ""
-    echo "Server username and password configurations are stored in"
-    echo "/etc/opencenter/opencenter.conf"
-    echo "  admin_user = <admin username>"
-    echo "  admin_pass = <admin password>"
-    echo ""
-    echo "If you change this you must also update the agent endpoint"
-    echo "configurations."
-    echo ""
-fi
+licensing
+display_info
 
 exit
