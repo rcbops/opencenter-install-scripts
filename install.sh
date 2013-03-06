@@ -275,7 +275,7 @@ ARGUMENTS:
   --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP
   --password=<Opencenter Server IP>
-         Specify the Opencenter Server IP
+         Specify the Opencenter Server Password
 EOF
 }
 
