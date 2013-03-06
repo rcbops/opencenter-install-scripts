@@ -377,7 +377,6 @@ for arg in $@; do
             ;;
         "--password")
             OPENCENTER_PASSWORD=$value
-            echo $OPENCENTER_PASSWORD
             ;;
         "--clients")
             if [ $value -eq $value 2>/dev/null ]; then
