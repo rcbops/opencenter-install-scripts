@@ -256,7 +256,7 @@ function install_rhel() {
   distro=$1
   # Redhat repo's aren't added quickly enough - adding a sleep
   if [ "$distro" == "RedHat" ]; then
-      sleep 30
+      sleep 10
   fi
 
   echo "Installing on RHEL/CentOS"

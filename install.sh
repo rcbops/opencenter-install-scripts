@@ -222,7 +222,7 @@ function install_rpm() {
 
   # For RedHat repo's aren't added quickly enough so adding a sleep
   if [ "${distro}" == "RedHat" ]; then
-      sleep 30
+      sleep 10
   fi
 
   if [ "${ROLE}" == "server" ]; then
