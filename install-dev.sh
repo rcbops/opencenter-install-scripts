@@ -136,7 +136,7 @@ function do_git_update() {
         git pull origin master
         popd
     else
-        git clone git@github.com:rcbops/${repo}
+        git clone https://github.com/rcbops/${repo}
     fi
 }
 

@@ -176,9 +176,9 @@ function setup_server_as() {
     fi
 
     if !( $USE_PACKAGES ); then
-        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - --role=${as} --ip=${ip}"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} --role=${as} --ip=${ip}"
     else
-        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     fi
 }
 
@@ -362,6 +362,7 @@ VERSION=1.0.0
 OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
 declare -A PIDS
 network_string=""
+verbose_string=""
 ####################
 
 for arg in $@; do
@@ -414,6 +415,7 @@ for arg in $@; do
             ;;
         "--verbose" | "-v")
             VERBOSE=1
+            verbose_string=" -v "
             set -x
             ;;
         "--version" | "-V")
