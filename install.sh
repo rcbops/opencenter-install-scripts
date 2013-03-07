@@ -103,10 +103,10 @@ function install_opencenter_apt_repo() {
 function adjust_iptables() {
     if [ "${ROLE}" == "server" ]; then
         iptables -I INPUT 1 -p tcp --dport 8443 -j ACCEPT
-        iptables-save
+        iptables-save > /etc/sysconfig/iptables
     elif [ "${ROLE}" == "dashboard" ]; then
         iptables -I INPUT 1 -p tcp --dport 443 -j ACCEPT
-        iptables-save
+        iptables-save > /etc/sysconfig/iptables
     fi
 }
 
