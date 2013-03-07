@@ -72,12 +72,12 @@ function install_opencenter_yum_repo() {
   cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
 [rcb-utils]
 name=RCB Utility packages for OpenCenter $1
-baseurl=$uri/stable/rpm/$releasedir/$releasever/\$basearch/
+baseurl=$uri/$repo_path/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=$uri/stable/rpm/RPM-GPG-RCB.key
+gpgkey=$uri/repo-testing/RPM-GPG-RCB.key
 EOF
-  rpm --import $uri/stable/rpm/RPM-GPG-RCB.key &>/dev/null || :
+  rpm --import $uri/repo-testing/RPM-GPG-RCB.key &>/dev/null || :
   if [[ $1 = "Fedora" ]]; then
       yum_opencenter_pkgs="$yum_opencenter_pkgs python-sqlalchemy"
       echo "skipping epel installation for Fedora"
@@ -122,10 +122,10 @@ function install_apt_repo() {
 function adjust_iptables() {
     if [ "${ROLE}" == "server" ]; then
         iptables -I INPUT 1 -p tcp --dport 8080 -j ACCEPT
-        iptables-save
+        iptables-save > /etc/sysconfig/iptables
     elif [ "${ROLE}" == "dashboard" ]; then
         iptables -I INPUT 1 -p tcp --dport 3000 -j ACCEPT
-        iptables-save
+        iptables-save > /etc/sysconfig/iptables
     fi
 }
 function do_git_update() {
@@ -133,11 +133,11 @@ function do_git_update() {
     repo=$1
     if [ -d ${repo} ]; then
         pushd ${repo}
-        git checkout master
-        git pull origin master
+        git checkout ${git_branch}
+        git pull origin ${git_branch}
         popd
     else
-        git clone https://github.com/rcbops/${repo}
+        git clone https://github.com/rcbops/${repo} -b ${git_branch}
     fi
 }
 
@@ -365,12 +365,14 @@ OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8080"
 VERSION=1.0.0
 VERBOSE=
+git_branch=sprint
 ####################
 
 ####################
 # Package Variables
-uri="http://packages.opencenter.rackspace.com"
-pkg_path="/stable/deb/rcb-utils/"
+uri="http://build.monkeypuppetlabs.com"
+pkg_path="/proposed-packages/"
+repo_path="repo-testing"
 apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 apt_dashboard_pkgs="build-essential git"
 yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
