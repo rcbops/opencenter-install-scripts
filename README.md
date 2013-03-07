@@ -48,8 +48,6 @@ Prerequisities
   * nova env variables set in ~/csrc.
 * Up to date versions of bash & sed - this may require updating on OSX
 * ~/.ssh/authorized_keys file exists, containing your key.
-* ~/.ssh/id_github file exists, containing your github key:
-    https://help.github.com/articles/generating-ssh-keys
 
 Installing individual servers
 -----------------------

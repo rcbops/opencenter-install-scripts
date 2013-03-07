@@ -168,10 +168,6 @@ function setup_server_as() {
     fi
 
     scp ${SSHOPTS} ${BASEDIR}/${scriptName}.sh root@$(ip_for ${server}):/tmp
-    if !( $USE_PACKAGES ); then
-        echo "Loading github key"
-        scp ${SSHOPTS} ${HOME}/.ssh/id_github root@$(ip_for ${server}):/root/.ssh/id_rsa
-    fi
 
     # Upload screen.rc file if exists
     if [[ -f ${HOME}/.screenrc ]]; then
@@ -181,8 +177,6 @@ function setup_server_as() {
 
     if !( $USE_PACKAGES ); then
         ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - --role=${as} --ip=${ip}"
-        echo "removing github key"
-        ssh ${SSHOPTS} root@$(ip_for ${server}) 'rm /root/.ssh/id_rsa'
     else
         ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     fi
