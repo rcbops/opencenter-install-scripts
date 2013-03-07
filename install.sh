@@ -212,11 +212,17 @@ function install_rpm() {
   stop_opencenter="stop opencenter"
   start_agent="start opencenter-agent"
   stop_agent="stop opencenter-agent"
+  # For Fedora we use systemd scripts
   if [ "${distro}" = "Fedora" ]; then
       start_opencenter="systemctl start opencenter.service"
       stop_opencenter="systemctl stop opencenter.service"
       start_agent="systemctl start opencenter-agent.service"
       stop_agent="systemctl stop opencenter-agent.service"
+  fi
+
+  # For RedHat repo's aren't added quickly enough so adding a sleep
+  if [ "${distro}" == "RedHat" ]; then
+      sleep 30
   fi
 
   if [ "${ROLE}" == "server" ]; then
@@ -261,7 +267,7 @@ function install_rpm() {
       fi
       # the opencenter-dashboard package restarts httpd, so this is
       # here for safety
-      sleep 15s
+      sleep 15
       chkconfig httpd on
       current_IP=$( cat /etc/httpd/conf.d/opencenter-dashboard.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/httpd/conf.d/opencenter-dashboard.conf

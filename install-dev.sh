@@ -251,6 +251,14 @@ function install_ubuntu() {
 
 
 function install_rhel() {
+  # $1 - Distro Fedora/RedHat/CentOS
+
+  distro=$1
+  # Redhat repo's aren't added quickly enough - adding a sleep
+  if [ "$distro" == "RedHat" ]; then
+      sleep 30
+  fi
+
   echo "Installing on RHEL/CentOS"
   local yum=$(which yum)
 
@@ -440,13 +448,13 @@ get_platform
 case $platform in
   "ubuntu") install_ubuntu ;;
   "redhat") install_opencenter_yum_repo "RedHat"
-                   install_rhel
+                   install_rhel "RedHat"
                    ;;
   "centos") install_opencenter_yum_repo "CentOS" 
-                   install_rhel
+                   install_rhel "CentOS"
                    ;;
   "fedoraproject") install_opencenter_yum_repo "Fedora"
-                   install_rhel
+                   install_rhel "Fedora"
                    ;;
 esac
 
