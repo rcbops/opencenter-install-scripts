@@ -206,6 +206,18 @@ EOF
 
 
 function install_rpm() {
+  # $1 - distro - Fedora/RedHat/CentOS
+  distro=$1
+  start_opencenter="start opencenter"
+  stop_opencenter="stop opencenter"
+  start_agent="start opencenter-agent"
+  stop_agent="stop opencenter-agent"
+  if [ "${distro}" = "Fedora" ]; then
+      start_opencenter="systemctl start opencenter.service"
+      stop_opencenter="systemctl stop opencenter.service"
+      start_agent="systemctl start opencenter-agent.service"
+      stop_agent="systemctl stop opencenter-agent.service"
+  fi
 
   if [ "${ROLE}" == "server" ]; then
       echo "Installing Opencenter-Server"
@@ -213,8 +225,11 @@ function install_rpm() {
           echo "Failed to install opencenter"
           exit 1
       fi
-      stop opencenter || :
-      start opencenter
+      if [ "${distro}" == "Fedora" ]; then
+          systemctl enable opencenter.service
+      fi
+      $stop_opencenter || :
+      $start_opencenter
   fi
 
   if [ "${ROLE}" != "dashboard" ]; then
@@ -231,8 +246,11 @@ function install_rpm() {
           exit 1
       fi
       sed -i "s/admin:password/admin:${OPENCENTER_PASSWORD}/g" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      stop opencenter-agent || :
-      start opencenter-agent
+      if [ "${distro}" == "Fedora" ]; then
+          systemctl enable opencenter-agent.service
+      fi 
+      $stop_agent || :
+      $start_agent
   fi
 
   if [ "${ROLE}" == "dashboard" ]; then
@@ -253,16 +271,16 @@ function install_rpm() {
   if [ "${ROLE}" == "agent" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      stop opencenter-agent || :
-      start opencenter-agent
+      $stop_agent || :
+      $start_agent
   elif [ "${ROLE}" == "server" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       sed -i "s/^admin_pass = password/admin_pass = ${OPENCENTER_PASSWORD}/g" /etc/opencenter/opencenter.conf
-      stop opencenter-agent || :
-      start opencenter-agent
-      stop opencenter
-      start opencenter
+      $stop_agent || :
+      $start_agent
+      $stop_opencenter || :
+      $start_opencenter
   fi
   adjust_iptables
 }
@@ -451,13 +469,13 @@ get_platform
 case $platform in
   "ubuntu") install_ubuntu ;;
   "redhat") install_opencenter_yum_repo "RedHat"
-                   install_rpm
+                   install_rpm "RedHat"
                    ;;
   "centos") install_opencenter_yum_repo "CentOS"
-                   install_rpm
+                   install_rpm "CentOS"
                    ;;
   "fedoraproject") install_opencenter_yum_repo "Fedora"
-                   install_rpm
+                   install_rpm "Fedora"
                    ;;
 esac
 
