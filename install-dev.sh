@@ -60,6 +60,7 @@ function verify_yum_package_exists() {
 
 
 function install_opencenter_yum_repo() {
+  # $1 yum distro (Fedora/CentOS/RedHat)
   releasever="6"
   releasedir="Fedora"
   case $1 in
@@ -142,10 +143,6 @@ function do_git_update() {
 
 
 function git_setup() {
-  cat > /root/.ssh/config <<EOF
-Host *github.com
-    StrictHostKeyChecking no
-EOF
   if [ "${ROLE}" != "dashboard" ]; then
       do_git_update opencenter
       do_git_update opencenter-agent
@@ -400,7 +397,7 @@ for arg in $@; do
             fi
             ;;
         "--ip" | "-i")
-            if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
+            if ( echo $value | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
                 OPENCENTER_SERVER=$value
             else
                 echo "Invalid IP specified - exiting"

@@ -156,11 +156,6 @@ function setup_server_as() {
     as=$2
     ip=$(ip_for "opencenter-server")
 
-    if [[ ! -f ${HOME}/.ssh/id_github ]]; then
-        echo "Please setup your github key in ${HOME}/.ssh/id_github"
-        exit 1
-    fi
-
     scriptName="install-dev"
 
     if ( $USE_PACKAGES ); then

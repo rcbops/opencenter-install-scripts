@@ -43,6 +43,7 @@ function verify_apt_package_exists() {
 }
 
 function install_opencenter_yum_repo() {
+  # $1 yum distro - (Fedora/CentOS/RedHat)
   releasever="6"
   releasedir="Fedora"
   case $1 in
@@ -401,14 +402,15 @@ for arg in $@; do
     case $flag in
         "--role" | "-r")
             if [ $value != "server" ] && [ $value != "agent" ] && [ $value != "dashboard" ]; then
-                echo "Invalid Role specified - defaulting to agent"
+                echo "Invalid Role specified - exiting"
                 usage
+                exit 1
             else
                 ROLE=$value
             fi
             ;;
         "--ip" | "-i")
-            if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
+            if ( echo $value | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
                 OPENCENTER_SERVER=$value
             else
                 echo "Invalid IP specified - exiting"
