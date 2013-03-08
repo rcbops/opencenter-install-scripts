@@ -222,7 +222,7 @@ function install_rpm() {
 
   # For RedHat repo's aren't added quickly enough so adding a sleep
   if [ "${distro}" == "RedHat" ]; then
-      sleep 10
+      sleep 20
   fi
 
   if [ "${ROLE}" == "server" ]; then
@@ -277,7 +277,7 @@ function install_rpm() {
   if [ "${ROLE}" == "agent" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/${OPENCENTER_SERVER}/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      $stop_agent || :
+      $stop_agent
       $start_agent
   elif [ "${ROLE}" == "server" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
