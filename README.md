@@ -26,8 +26,9 @@ Installing Opencenter Cluster
       -a --add-clients
           Add clients to existing cluster specified by --prefix
           NB - If password was used for original cluster, password must be the same as existing cluster's password
-      -n --network=<CIDR>
+      -n --network=<CIDR>|<Existing network name>|<Existing network uuid>
           Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
+          You can specify an existing network name or network uuid
       -o --os=[redhat | centos | ubuntu | fedora ]
           Specify the OS to install on the servers - default ubuntu
 

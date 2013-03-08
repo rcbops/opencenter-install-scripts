@@ -190,6 +190,20 @@ function credentials_check(){
     fi
 }
 
+function check_network(){
+    if ( echo $network_value | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1 ); then
+        PRIV_NETWORK=$network_value
+        create_network
+    elif ( $NOVA network-list | grep -q " ${network_value} " ); then
+        priv_network_id=$($NOVA network-list | grep ${network_value} | awk '{print $2}')
+        network_string="--nic net-id=${priv_network_id}"
+    else
+        echo "Invalid Network specified"
+        usage
+        exit 1
+    fi
+}
+
 function boot_instances(){
     imagelist=$($NOVA image-list)
     flavorlist=$($NOVA flavor-list)
@@ -239,7 +253,7 @@ function check_install_type(){
         server_port=8443
         DASHBOARD_PROTO=https
         echo "Server is listening on port 8443, using package install"
-    elif (nv -z ${ip} 8443 > /dev/null 2>&1 ); then
+    elif ( nc -z ${ip} 8080 > /dev/null 2>&1 ); then
         echo "Server is listening on port 8080 using git install"
         USE_PACKAGES=false
         DASHBOARD_PORT=80
@@ -340,8 +354,9 @@ ARGUMENTS:
   -a --add-clients
          Add clients to Opencenter Cluster specified by prefix
          NB - If password was used for original cluster, password must be the same as existing cluster's password
-  -n --network=<CIDR>
+  -n --network=<CIDR>|<Existing network name>|<Existing network uuid>
          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
+         You can specify an existing network name or network uuid
   -o --os=[redhat | centos | ubuntu | fedora ]
          Specify the OS to install on the servers - default ubuntu
 EOF
@@ -405,6 +420,8 @@ network_string=""
 verbose_string=""
 ADD_CLIENTS=false
 seq_count=0
+USE_NETWORK=false
+network_value=""
 ####################
 
 for arg in $@; do
@@ -415,14 +432,8 @@ for arg in $@; do
             CLUSTER_PREFIX=$value
             ;;
         "--network" | "-n")
-            if ( echo $value | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1 ); then
-                PRIV_NETWORK=$value
-                create_network
-            else
-                echo "Invalid IP CIDR range specified"
-                usage
-                exit 1
-            fi
+            USE_NETWORK=true
+            network_value=$value
             ;;
         "--password" | "-pass")
             OPENCENTER_PASSWORD=$value
@@ -476,6 +487,9 @@ for arg in $@; do
 done
 
 credentials_check
+if ( $USE_NETWORK ); then
+    check_network
+fi
 boot_instances
 server_setup
 licensing
