@@ -198,7 +198,7 @@ function boot_instances(){
     flavor_2g=$(echo "${flavorlist}" | grep 2GB | head -n1 | awk '{ print $2 }')
     flavor_4g=$(echo "${flavorlist}" | grep 4GB | head -n1 | awk '{ print $2 }')
 
-    if ! $RERUN
+    if !($RERUN) && !($ADD_CLIENTS)
     then
         if ( $NOVA list | grep -q $(mangle_name) ); then
             echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
@@ -207,19 +207,51 @@ function boot_instances(){
     fi
 
     if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
-        instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-server) > /dev/null 2>&1
-        for client in $(seq 1 $CLIENT_COUNT); do
+        if ! ( $ADD_CLIENTS ); then
+            instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-server) > /dev/null 2>&1
+            instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-dashboard) > /dev/null 2>&1
+        fi
+        if ( $ADD_CLIENTS ); then
+            if !( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-server ); then
+                echo "There is no server with the specified prefix"
+                usage
+                exit 1
+            fi
+            echo "Adding additional Clients"
+            check_install_type
+            get_network
+            seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*) .*$/\1/p" | sort -rn | head -1 )
+        fi
+        for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
             instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-client${client}) > /dev/null 2>&1
         done
-        instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-dashboard) > /dev/null 2>&1
     else
         echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
         exit 1
     fi
 }
 
+function check_install_type(){
+    ip=$(ip_for "opencenter-server")
+    if ( nc -z ${ip} 8443 > /dev/null 2>&1 ); then
+        USE_PACKAGES=true
+        DASHBOARD_PORT=443
+        server_port=8443
+        DASHBOARD_PROTO=https
+        echo "Server is listening on port 8443, using package install"
+    elif (nv -z ${ip} 8443 > /dev/null 2>&1 ); then
+        echo "Server is listening on port 8080 using git install"
+        USE_PACKAGES=false
+        DASHBOARD_PORT=80
+        server_port=8080
+        DASHBOARD_PORT=http
+    else
+        echo "Server is not listening on 8080 or 8443, using specified setting"
+    fi
+}
+
 function create_network(){
-    if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX} ); then
+    if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX}-net ); then
         echo "Network ${CLUSTER_PREFIX}-net already exists, delete and re-run or use different prefix"
         exit 1
     fi
@@ -232,15 +264,25 @@ function create_network(){
     echo "Network ${priv_network_id} created"
 }
 
+function get_network(){
+    if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX}-net ); then
+        priv_network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
+        network_string="--nic net-id=${priv_network_id}"
+    fi
+}
+
 function server_setup(){
-    nodes=("opencenter-server")
-    wait_for_ssh "opencenter-server"
-    for client in $(seq 1 $CLIENT_COUNT); do
+    nodes=("")
+    if !( $ADD_CLIENTS ); then
+         wait_for_ssh "opencenter-server"
+         nodes=(${nodes[@]} "opencenter-server")
+         wait_for_ssh "opencenter-dashboard"
+         nodes=(${nodes[@]} "opencenter-dashboard")
+    fi
+    for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
         wait_for_ssh "opencenter-client${client}"
         nodes=(${nodes[@]} "opencenter-client${client}")
     done
-    wait_for_ssh "opencenter-dashboard"
-    nodes=(${nodes[@]} "opencenter-dashboard")
 
     for svr in ${nodes[@]}; do
         what=agent
@@ -295,6 +337,9 @@ ARGUMENTS:
          Specify the Opencenter Server Password - only used for package installs - default "opencentre"
   -pkg --packages
          Install using packages
+  -a --add-clients
+         Add clients to Opencenter Cluster specified by prefix
+         NB - If password was used for original cluster, password must be the same as existing cluster's password
   -n --network=<CIDR>
          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
   -o --os=[redhat | centos | ubuntu | fedora ]
@@ -358,6 +403,8 @@ OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
 declare -A PIDS
 network_string=""
 verbose_string=""
+ADD_CLIENTS=false
+seq_count=0
 ####################
 
 for arg in $@; do
@@ -403,6 +450,9 @@ for arg in $@; do
             else
                 get_image_type $value
             fi
+            ;;
+        "--add-clients" | "-a")
+            ADD_CLIENTS=true
             ;;
         "--help" | "-h")
             usage

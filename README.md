@@ -23,6 +23,9 @@ Installing Opencenter Cluster
           Specify the Opencenter Server Password - only used for package installs - default "opencentre"
       -pkg --packages
           Install using packages
+      -a --add-clients
+          Add clients to existing cluster specified by --prefix
+          NB - If password was used for original cluster, password must be the same as existing cluster's password
       -n --network=<CIDR>
           Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
       -o --os=[redhat | centos | ubuntu | fedora ]
