@@ -256,9 +256,9 @@ function check_install_type(){
     elif ( nc -z ${ip} 8080 > /dev/null 2>&1 ); then
         echo "Server is listening on port 8080 using git install"
         USE_PACKAGES=false
-        DASHBOARD_PORT=80
+        DASHBOARD_PORT=3000
         server_port=8080
-        DASHBOARD_PORT=http
+        DASHBOARD_PROTO=http
     else
         echo "Server is not listening on 8080 or 8443, using specified setting"
     fi
