@@ -7,18 +7,40 @@ You can use the individual scripts to install the components on servers rather t
 Installing Opencenter Cluster
 -----------------------
 
-    ./opencenter-cluster.sh <Cluster-Name> <Number of Clients> [--packages] [--network(=<CIDR>)]
+    ./opencenter-cluster.sh
+
+    OPTIONS:
+      -h --help  Show this message
+      -v --verbose  Verbose output
+      -V --version  Output the version of this script
+
+    ARGUMENTS:
+      -p --prefix=<Cluster Prefix>
+          Specify the name prefix for the cluster - default "c1"
+      -c --clients=<Number of Clients>
+          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
+      -pass --password=<Opencenter Server Password>
+          Specify the Opencenter Server Password - only used for package installs - default "opencentre"
+      -pkg --packages
+          Install using packages
+      -a --add-clients
+          Add clients to existing cluster specified by --prefix
+          NB - If password was used for original cluster, password must be the same as existing cluster's password
+      -n --network=<CIDR>|<Existing network name>|<Existing network uuid>
+          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
+          You can specify an existing network name or network uuid
+      -o --os=[redhat | centos | ubuntu | fedora ]
+          Specify the OS to install on the servers - default ubuntu
 
 * Number of Clients defaults to 2 if left unspecified
 * If you are using opencenter-client locally you can set your endpoint:
 export OPENCENTER_ENDPOINT=http://<ip of server>:8080
 * --packages will install from packages instead of github repos, not for Dev work.
-* To use CentOS - export IMAGE_TYPE="CentOS 6.3"
 * --network will create a private network for the cluster defaulting to 192.168.0.0/24
 * network range can be specified as a CIDR by using --network=<CIDR>
 * --network will require nova with "network-create" functionality
 
-Prerequisities
+Prerequisities For Installing Opencenter Cluster
 -----------------------
 
 * Nova client installed and working with cloud, specifically returning network information, for Rackspace cloud see:
@@ -29,16 +51,25 @@ Prerequisities
   * nova env variables set in ~/csrc.
 * Up to date versions of bash & sed - this may require updating on OSX
 * ~/.ssh/authorized_keys file exists, containing your key.
-* ~/.ssh/id_github file exists, containing your github key:
-    https://help.github.com/articles/generating-ssh-keys
 
 Installing individual servers
 -----------------------
 
-    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s [server | agent | dashboard] <SERVER IP>
-    Defaults to "agent" 0.0.0.0
+    curl -L "https://bcd46edb6e5fd45555c0-409026321750f2e680f86e05ff37dd6d.ssl.cf1.rackcdn.com/install.sh" | bash -s <options/arguments>
 
-* NB This doesn't have the same pre-requisites
+    OPTIONS:
+      -h --help  Show this message
+      -v --verbose  Verbose output
+      -V --version  Output the version of this script
+
+    ARGUMENTS:
+      -r --role=[agent | server | dashboard]
+             Specify the role of the node - defaults to "agent"
+      -i --ip=<Opencenter Server IP>
+             Specify the Opencenter Server IP - defaults to "0.0.0.0"
+      -p --password=<Opencenter Server IP>
+             Specify the Opencenter Server Password - defaults to "password"
+
 Wiping the Cluster 
 -----------------------
 
@@ -52,10 +83,20 @@ Pushing updates to the Cluster
 From within "opencenter", "opencenter-agent", "opencenter-client", "opencenter-dashboard" directories on your local laptop/desktop
 you can push updates and have the services restart automaticallyL
 
-    ./utils/push.sh <Cluster-Name> <repo> <repo path>
-    <repo> defaults to "opencenter-all" which will include opencenter/opencenter-agent/opencenter-client
-    <repo> possible options: [opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard]
-    <repo path> can be left blank if you are within one of the directories, otherwise specify the path
+    ./utils/push.sh <arguments/options>
+
+    OPTIONS:
+       -h --help  Show this message
+       -v --verbose  Verbose output
+       -V --version  Output the version of this script
+
+    ARGUMENTS:
+       -p --prefix=<Cluster Prefix>
+            Specify the name prefix for the cluster - default "c1"
+       -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
+            Specify the projects to push - defaults to opencenter-all
+       -r --repo-path=<Local path to repositories>
+            Specify the local path to your repositories
 
  Tailing Task Logs on Opencenter servers:
 -----------------------
