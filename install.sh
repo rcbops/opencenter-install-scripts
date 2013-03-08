@@ -322,14 +322,14 @@ EOF
 
 function get_platform() {
     arch=$(uname -m)
-    if [ -f "/etc/lsb-release" ];
-    then
-        platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
-        platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
-    elif [ -f "/etc/system-release-cpe" ];
+    if [ -f "/etc/system-release-cpe" ];
     then
         platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
         platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
+    elif [ -f "/etc/lsb-release" ];
+    then
+        platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
+        platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
     else
         echo "Your platform is not supported.  Please email RPCFeedback@rackspace.com and let us know."
         exit 1
@@ -338,6 +338,7 @@ function get_platform() {
     # On ubuntu the version number needs to be mapped to a name
     case $platform_version in
         "12.04") platform_name="precise" ;;
+        *) echo "Unsupported/unknown version $platform_version" ;;
     esac
 }
 
