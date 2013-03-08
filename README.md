@@ -41,7 +41,7 @@ export OPENCENTER_ENDPOINT=http://<ip of server>:8080
 * network range can be specified as a CIDR by using --network=<CIDR>
 * --network will require nova with "network-create" functionality
 
-Prerequisities
+Prerequisities For Installing Opencenter Cluster
 -----------------------
 
 * Nova client installed and working with cloud, specifically returning network information, for Rackspace cloud see:
@@ -71,7 +71,6 @@ Installing individual servers
       -p --password=<Opencenter Server IP>
              Specify the Opencenter Server Password - defaults to "password"
 
-* NB This doesn't have the same pre-requisites
 Wiping the Cluster 
 -----------------------
 
