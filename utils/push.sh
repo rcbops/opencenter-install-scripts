@@ -26,15 +26,6 @@
 
 set -e
 
-NOVA=${NOVA:-nova}
-REPO_PATH="../"
-exec 99>/tmp/push.log
-export BASH_XTRACEFD=99
-set -x
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-trap on_exit EXIT
-
 function on_exit() {
     if [ $? -ne 0 ]; then
         echo -e "\nERROR:\n"
@@ -43,36 +34,6 @@ function on_exit() {
     fi
 }
 
-declare -A PIDS
-declare -A IPADDRS
-
-SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-PUSHOPTS="${PUSHOPTS}"
-CLUSTER_PREFIX="c1"
-
-if [ "x$1" != "x" ]; then
-    CLUSTER_PREFIX=$1
-fi
-
-PUSH_PROJECT="opencenter-all"
-
-if [ "x$2" != "x" ]; then
-    PUSH_PROJECT=$2
-else
-    echo "No option specified, defaulting to 'opencenter-all'"
-fi
-
-if [ $# -ge 3 ]; then
-    REPO_PATH=$3
-    last_char=${REPO_PATH: -1:1}
-    if [ $last_char != / ]; then
-        REPO_PATH="$REPO_PATH"/
-    fi
-    if [ ! -d ${REPO_PATH}opencenter-agent ] && [ ! -d ${REPO_PATH}opencenter ] && [ ! -d ${REPO_PATH}opencenter-client ] && [ ! -d ${REPO_PATH}opencenter-dashboard ]; then
-        echo "No repo's in specified path"
-        exit 1
-    fi
-fi
 
 function mangle_name() {
     server=$1
@@ -175,7 +136,101 @@ function push_opencenter_dashboard() {
     ssh ${SSHOPTS} root@${ip} '/bin/bash -c "source /root/.profile;cd /root/opencenter-dashboard; make publish; ./dashboard"' >&99 2>&1
 }
 
-nodes=$($NOVA list |grep -o "${CLUSTER_PREFIX}-[a-zA-Z0-9_-]*" )
+function usage() {
+cat <<EOF
+usage: $0 options
+
+This script will install opencenter packages.
+
+OPTIONS:
+  -h --help  Show this message
+  -v --verbose  Verbose output
+  -V --version  Output the version of this script
+
+ARGUMENTS:
+  -p --prefix=<Cluster Prefix>
+         Specify the name prefix for the cluster - default "c1"
+  -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
+         Specify the projects to push - defaults to opencenter-all
+  -r --repo-path=<Local path to repositories>
+         Specify the local path to your repositories
+EOF
+}
+
+
+function display_version() {
+cat <<EOF
+$0 (version: $VERSION)
+EOF
+}
+
+################################################
+# -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
+################################################
+####################
+# Global Variables #
+NOVA=${NOVA:-nova}
+REPO_PATH="../"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+PUSHOPTS="${PUSHOPTS}"
+CLUSTER_PREFIX="c1"
+PUSH_PROJECT="opencenter-all"
+VERSION=1.0.0
+VERBOSE=
+####################
+
+####################
+#   Declarations   #
+declare -A PIDS
+declare -A IPADDRS
+exec 99>/tmp/push.log
+export BASH_XTRACEFD=99
+trap on_exit EXIT
+####################
+
+for arg in $@; do
+    flag=$(echo $arg | cut -d "=" -f1)
+    value=$(echo $arg | cut -d "=" -f2)
+    case $flag in
+        "--prefix" | "-p")
+            CLUSTER_PREFIX=$value
+            ;;
+        "--project" | "-proj")
+            PUSH_PROJECT=$value
+            ;;
+        "--repo-path" | "-r")
+           REPO_PATH=$value
+           last_char=${REPO_PATH: -1:1}
+           if [ $last_char != / ]; then
+               REPO_PATH="$REPO_PATH"/
+           fi
+           if [ ! -d ${REPO_PATH}opencenter-agent ] && [ ! -d ${REPO_PATH}opencenter ] && [ ! -d ${REPO_PATH}opencenter-client ] && [ ! -d ${REPO_PATH}opencenter-dashboard ]; then
+               echo "No repo's in specified path"
+               exit 1
+           fi
+           ;;
+        "--help" | "-h")
+            usage
+            exit 1
+            ;;
+        "--verbose" | "-v")
+            VERBOSE=1
+            set -x
+            ;;
+        "--version" | "-V")
+            display_version
+            exit 1
+            ;;
+        *)
+            echo "Invalid Option $flag"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+nodes=$($NOVA list | awk "\$4~/^\\s*${CLUSTER_PREFIX}-/{print \$4}")
 for node in ${nodes}; do
     IPADDRS[$node]=$(ip_for ${node})
 done
@@ -247,6 +302,6 @@ case "$PUSH_PROJECT" in
         ;;
 
     *)
-        echo "Usage: push.sh <Cluster-Prefix> {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}"
+        usage
         exit 1
 esac

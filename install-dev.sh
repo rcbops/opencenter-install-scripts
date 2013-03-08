@@ -24,37 +24,7 @@
 ##############################################################################
 #
 #
-# set -x
 set -e
-
-ROLE="agent"
-OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
-SERVER_PORT="8080"
-USAGE="Usage: ./install-server.sh [server | agent | dashboard] <Server-IP>"
-
-if [ $# -ge 1 ]; then
-    if [ $1 != "server" ] && [ $1 != "agent" ] && [ $1 != "dashboard" ]; then
-        echo "Invalid Role specified - Defaulting to 'server' Role"
-        echo $USAGE
-    else
-        ROLE=$1
-    fi
-    if [ $# -ge 2 ]; then
-        if ( echo $2 | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
-            if [ $ROLE != "server" ]; then
-                OPENCENTER_SERVER=$2
-            fi
-        else
-            echo "Invalid IP specified - Defaulting to 0.0.0.0"
-            echo $USAGE
-        fi
-    fi
-fi
-
-VERSION="1.0.0"
-
-echo "INSTALLING AS ${ROLE} against server IP of ${OPENCENTER_SERVER}"
-export DEBIAN_FRONTEND=noninteractive
 
 function verify_apt_package_exists() {
   # $1 - name of package to test
@@ -90,6 +60,7 @@ function verify_yum_package_exists() {
 
 
 function install_opencenter_yum_repo() {
+  # $1 yum distro (Fedora/CentOS/RedHat)
   releasever="6"
   releasedir="Fedora"
   case $1 in
@@ -101,12 +72,12 @@ function install_opencenter_yum_repo() {
   cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
 [rcb-utils]
 name=RCB Utility packages for OpenCenter $1
-baseurl=$uri/stable/rpm/$releasedir/$releasever/\$basearch/
+baseurl=$uri/$repo_path/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=$uri/stable/rpm/RPM-GPG-RCB.key
+gpgkey=$uri/repo-testing/RPM-GPG-RCB.key
 EOF
-  rpm --import $uri/stable/rpm/RPM-GPG-RCB.key &>/dev/null || :
+  rpm --import $uri/repo-testing/RPM-GPG-RCB.key &>/dev/null || :
   if [[ $1 = "Fedora" ]]; then
       yum_opencenter_pkgs="$yum_opencenter_pkgs python-sqlalchemy"
       echo "skipping epel installation for Fedora"
@@ -148,25 +119,30 @@ function install_apt_repo() {
   fi
 }
 
+function adjust_iptables() {
+    if [ "${ROLE}" == "server" ]; then
+        iptables -I INPUT 1 -p tcp --dport 8080 -j ACCEPT
+        iptables-save > /etc/sysconfig/iptables
+    elif [ "${ROLE}" == "dashboard" ]; then
+        iptables -I INPUT 1 -p tcp --dport 3000 -j ACCEPT
+        iptables-save > /etc/sysconfig/iptables
+    fi
+}
 function do_git_update() {
     # $1 = repo name
     repo=$1
     if [ -d ${repo} ]; then
         pushd ${repo}
-        git checkout master
-        git pull origin master
+        git checkout ${git_branch}
+        git pull origin ${git_branch}
         popd
     else
-        git clone git@github.com:rcbops/${repo}
+        git clone https://github.com/rcbops/${repo} -b ${git_branch}
     fi
 }
 
 
 function git_setup() {
-  cat > /root/.ssh/config <<EOF
-Host *github.com
-    StrictHostKeyChecking no
-EOF
   if [ "${ROLE}" != "dashboard" ]; then
       do_git_update opencenter
       do_git_update opencenter-agent
@@ -275,6 +251,14 @@ function install_ubuntu() {
 
 
 function install_rhel() {
+  # $1 - Distro Fedora/RedHat/CentOS
+
+  distro=$1
+  # Redhat repo's aren't added quickly enough - adding a sleep
+  if [ "$distro" == "RedHat" ]; then
+      sleep 10
+  fi
+
   echo "Installing on RHEL/CentOS"
   local yum=$(which yum)
 
@@ -309,7 +293,7 @@ function install_rhel() {
   done
 
   git_setup
-  iptables -F
+  adjust_iptables
 }
 
 function usage() {
@@ -319,8 +303,15 @@ usage: $0 options
 This script will install opencenter packages.
 
 OPTIONS:
-  -h  Show this message
-  -v  Verbose output
+  -h --help  Show this message
+  -v --verbose  Verbose output
+  -V --version  Display script version
+
+ARGUMENTS:
+  -r --role=[server | agent | dashboard]
+         Specify the role of the node - defaults to "agent"
+  -i --ip=<Opencenter Server IP>
+         Specify the Opencenter Server IP - defaults to "0.0.0.0"
 EOF
 }
 
@@ -331,20 +322,69 @@ $0 (version: $VERSION)
 EOF
 }
 
+function get_platform() {
+    arch=$(uname -m)
+    if [ -f "/etc/system-release-cpe" ];
+    then
+        platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
+        platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
+    elif [ -f "/etc/lsb-release" ];
+    then
+        platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
+        platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)    
+    else
+        echo "Your platform is not supported.  Please email RPCFeedback@rackspace.com and let us know."
+        exit 1
+    fi
+
+    # On ubuntu the version number needs to be mapped to a name
+    case $platform_version in
+        "12.04") platform_name="precise" ;;
+        *) echo "Unsupported/unknown version $platform_version" ;;
+    esac
+}
+
+function licensing() {
+    echo ""
+    echo "
+OpenCenter™ is Copyright 2013 by Rackspace US, Inc.
+OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at:  <OpenCenter Source Repository> or upon written request.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
+Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
+"
+}
+
+
+function display_info() {
+    echo "You have installed Opencenter. WooHoo!!"
+    if [[ "${ROLE}" = "dashboard" ]]; then
+        my_ip=$(ip a show dev `ip route | grep default | awk '{print $5}'` | grep "inet " | awk '{print $2}' | cut -d "/" -f 1)
+        cat <<EOF
+
+Your OpenCenter dashboard is available at http://${my_ip}
+
+EOF
+    fi
+}
 
 ################################################
 # -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
 ################################################
-
 ####################
-# Global Variables
+# Global Variables #
+ROLE="agent"
+OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
+SERVER_PORT="8080"
+VERSION=1.0.0
 VERBOSE=
+git_branch=sprint
 ####################
 
 ####################
 # Package Variables
-uri="http://packages.opencenter.rackspace.com"
-pkg_path="/stable/deb/rcb-utils/"
+uri="http://build.monkeypuppetlabs.com"
+pkg_path="/proposed-packages/"
+repo_path="repo-testing"
 apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 apt_dashboard_pkgs="build-essential git"
 yum_opencenter_pkgs="git openssl-devel python-setuptools python-cliapp gcc screen python-requests python-flask python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
@@ -357,43 +397,52 @@ apt_repo="rcb-utils"
 apt_key="765C5E49F87CBDE0"
 apt_file_name="${apt_repo}.list"
 apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
-####################
 
-# Parse options
-while getopts "hvV" option
-do
-  case $option in
-    h)
-      usage
-      exit 1
-      ;;
-    v) VERBOSE=1 ;;
-    V)
-      display_version
-      exit 1
-      ;;
-    ?)
-      usage
-      exit 1
-      ;;
-  esac
+for arg in $@; do
+    flag=$(echo $arg | cut -d "=" -f1)
+    value=$(echo $arg | cut -d "=" -f2)
+    case $flag in
+        "--role" | "-r")
+            if [ $value != "server" ] && [ $value != "agent" ] && [ $value != "dashboard" ]; then
+                echo "Invalid Role specified - defaulting to agent"
+                usage
+            else
+                ROLE=$value
+            fi
+            ;;
+        "--ip" | "-i")
+            if ( echo $value | egrep -q "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" ); then
+                OPENCENTER_SERVER=$value
+            else
+                echo "Invalid IP specified - exiting"
+                usage
+                exit 1
+            fi
+            ;;
+        "--help" | "-h")
+            usage
+            exit 1
+            ;;
+        "--verbose" | "-v")
+            VERBOSE=1
+            set -x
+            ;;
+        "--version" | "-V")
+            display_version
+            exit 1
+            ;;
+        *)
+            echo "Invalid Option $flag"
+            usage
+            exit 1
+            ;;
+    esac
 done
 
-arch=$(uname -m)
-if [ -f "/etc/lsb-release" ];
-then
-  platform=$(grep "DISTRIB_ID" /etc/lsb-release | cut -d"=" -f2 | tr "[:upper:]" "[:lower:]")
-  platform_version=$(grep DISTRIB_RELEASE /etc/lsb-release | cut -d"=" -f2)
-elif [ -f "/etc/system-release-cpe" ];
-then
-  platform=$(cat /etc/system-release-cpe | cut -d ":" -f 3)
-  platform_version=$(cat /etc/system-release-cpe | cut -d ":" -f 5)
-fi
+export DEBIAN_FRONTEND=noninteractive
 
-# On ubuntu the version number needs to be mapped to a name
-case $platform_version in
-  "12.04") platform_name="precise" ;;
-esac
+get_platform
+
 
 # echo "Arch: ${arch}"
 # echo "Platform: ${platform}"
@@ -403,22 +452,17 @@ esac
 case $platform in
   "ubuntu") install_ubuntu ;;
   "redhat") install_opencenter_yum_repo "RedHat"
-                   install_rhel
+                   install_rhel "RedHat"
                    ;;
   "centos") install_opencenter_yum_repo "CentOS" 
-                   install_rhel
+                   install_rhel "CentOS"
                    ;;
   "fedoraproject") install_opencenter_yum_repo "Fedora"
-                   install_rhel
+                   install_rhel "Fedora"
                    ;;
 esac
 
-echo ""
-echo "
-OpenCenter™ is Copyright 2013 by Rackspace US, Inc.
-OpenCenter is licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with the License.  This version of OpenCenter includes Rackspace trademarks and logos, and in accordance with Section 6 of the License, the provision of commercial support services in conjunction with a version of OpenCenter which includes Rackspace trademarks and logos is prohibited.  OpenCenter source code and details are available at:  <OpenCenter Source Repository> or upon written request.
-You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 and a copy, including this notice, is available in the LICENSE.TXT file accompanying this software.
-Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language governing permissions and limitations under the License.
-"
-echo "You have installed Opencenter. WooHoo!!"
+licensing
+display_info
+
 exit
