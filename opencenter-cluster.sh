@@ -194,7 +194,7 @@ function check_network(){
     if ( echo $network_value | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1 ); then
         PRIV_NETWORK=$network_value
         create_network
-    elif [ $network_value = "--network" ]; then
+    elif [ "$network_value" == "--network" ]; then
         create_network
     elif ( $NOVA network-list | grep -q " ${network_value} " ); then
         priv_network_id=$($NOVA network-list | grep ${network_value} | awk '{print $2}')
