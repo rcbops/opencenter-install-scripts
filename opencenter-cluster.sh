@@ -431,7 +431,9 @@ for arg in $@; do
     value=$(echo $arg | cut -d "=" -f2)
     case $flag in
         "--prefix" | "-p")
-            CLUSTER_PREFIX=$value
+            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+                CLUSTER_PREFIX=$value
+            fi
             ;;
         "--network" | "-n")
             USE_NETWORK=true
