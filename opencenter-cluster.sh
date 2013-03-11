@@ -194,6 +194,8 @@ function check_network(){
     if ( echo $network_value | egrep "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\/[0-9]{2}$" > /dev/null 2>&1 ); then
         PRIV_NETWORK=$network_value
         create_network
+    elif [ "$network_value" == "--network" ] || [ "$network_value" == "-n" ]; then
+        create_network
     elif ( $NOVA network-list | grep -q " ${network_value} " ); then
         priv_network_id=$($NOVA network-list | grep ${network_value} | awk '{print $2}')
         network_string="--nic net-id=${priv_network_id}"
@@ -429,14 +431,18 @@ for arg in $@; do
     value=$(echo $arg | cut -d "=" -f2)
     case $flag in
         "--prefix" | "-p")
-            CLUSTER_PREFIX=$value
+            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+                CLUSTER_PREFIX=$value
+            fi
             ;;
         "--network" | "-n")
             USE_NETWORK=true
             network_value=$value
             ;;
         "--password" | "-pass")
-            OPENCENTER_PASSWORD=$value
+            if [ "$value" != "--password" ] && [ "$value" != "-pass" ]; then
+                OPENCENTER_PASSWORD=$value
+            fi
             ;;
         "--clients" | "-c")
             if [ $value -eq $value 2>/dev/null ]; then
