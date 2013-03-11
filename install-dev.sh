@@ -170,6 +170,13 @@ EOF
       pushd opencenter-agent
       sed "s/127.0.0.1/${OPENCENTER_SERVER}/g" opencenter-agent.conf.sample > local.conf
       sed "s/NOTSET/DEBUG/g" log.cfg > local-log.cfg
+      if [ "${ROLE}" == "agent" ]; then
+          pushd opencenteragent/plugins/output
+          if [ -f "plugin_adventurator.py" ]; then
+              rm plugin_adventurator.py
+          fi
+          popd
+      fi
       PYTHONPATH=../opencenter screen -S opencenter-agent -d -m python ./opencenter-agent.py -v -c ./local.conf
       popd
   fi
