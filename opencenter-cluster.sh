@@ -224,10 +224,10 @@ function boot_instances(){
         fi
     fi
 
-    if [[ -f ${HOME}/.ssh/authorized_keys ]]; then
+    if [[ -f ${key_location} ]]; then
         if ! ( $ADD_CLIENTS ); then
-            instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-server) > /dev/null 2>&1
-            instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-dashboard) > /dev/null 2>&1
+            instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
+            instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
         fi
         if ( $ADD_CLIENTS ); then
             if !( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-server ); then
@@ -241,10 +241,10 @@ function boot_instances(){
             seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*) .*$/\1/p" | sort -rn | head -1 )
         fi
         for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
-            instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${HOME}/.ssh/authorized_keys $(mangle_name opencenter-client${client}) > /dev/null 2>&1
+            instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
         done
     else
-        echo "Please setup your ${HOME}/.ssh/authorized_keys file for key injection to cloud servers "
+        echo "Please setup your specified key ${key_location} file for key injection to cloud servers "
         exit 1
     fi
 }
@@ -363,6 +363,8 @@ ARGUMENTS:
          You can specify an existing network name or network uuid
   -o --os=[redhat | centos | ubuntu | fedora ]
          Specify the OS to install on the servers - default ubuntu
+  -pk --public-key=[location of key file]
+         Specify the location of the key file to inject onto the cloud servers
 EOF
 }
 
@@ -430,6 +432,7 @@ OS_AUTH_URL=${OS_AUTH_URL:-}
 OS_TENANT_NAME=${OS_TENANT_NAME:-}
 OS_USERNAME=${OS_USERNAME:-}
 OS_PASSWORD=${OS_PASSWORD:-}
+key_location=${HOME}/.ssh/authorized_keys
 ####################
 
 for arg in $@; do
@@ -476,6 +479,17 @@ for arg in $@; do
             ;;
         "--add-clients" | "-a")
             ADD_CLIENTS=true
+            ;;
+        "--public-key" | "-pk")
+            if [ "$value" != "--public-key" ] && [ "$value" != "-pk" ]; then
+                if [ ${value:0:1} == "/" ]; then
+                    key_location=$value
+                elif [ ${value:0:1} == "~" ]; then
+                    key_location="$HOME""${value:1}"
+                else
+                    key_location="$PWD""/""$value"
+                fi
+            fi
             ;;
         "--help" | "-h")
             usage

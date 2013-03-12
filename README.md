@@ -31,6 +31,8 @@ Installing Opencenter Cluster
           You can specify an existing network name or network uuid
       -o --os=[redhat | centos | ubuntu | fedora ]
           Specify the OS to install on the servers - default ubuntu
+      -pk --public-key=[location of key file]
+          Specify the location of the key file to inject onto the cloud servers
 
 * Number of Clients defaults to 2 if left unspecified
 * If you are using opencenter-client locally you can set your endpoint:
@@ -49,8 +51,11 @@ Prerequisities For Installing Opencenter Cluster
 * Either of these:
   * supernova configured and an environment variable exported NOVA="supernova your-env"
   * nova env variables set in ~/csrc.
+  * nova env variables already sourced
 * Up to date versions of bash & sed - this may require updating on OSX
-* ~/.ssh/authorized_keys file exists, containing your key.
+* Either of these:
+  * ~/.ssh/authorized_keys file exists, containing your key.
+  * Use -pk= or --public-key= to set the location of your key file.
 
 Installing individual servers
 -----------------------
