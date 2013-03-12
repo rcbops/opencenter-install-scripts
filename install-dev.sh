@@ -319,6 +319,9 @@ ARGUMENTS:
          Specify the role of the node - defaults to "agent"
   -i --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
+  -rr --rerun
+         Rerun the script without having to create a new SERVER_PORT
+         Currently not required for install-dev since repo's will be updated
 EOF
 }
 
@@ -425,6 +428,10 @@ for arg in $@; do
                 usage
                 exit 1
             fi
+            ;;
+        "--rerun" | "-r")
+            # Currently not required for install-dev.sh since it will be re-setup anyway!
+            RERUN=true
             ;;
         "--help" | "-h")
             usage
