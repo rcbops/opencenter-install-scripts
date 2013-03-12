@@ -171,9 +171,9 @@ function setup_server_as() {
     fi
 
     if !( $USE_PACKAGES ); then
-        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} --role=${as} --ip=${ip}"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip}"
     else
-        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     fi
 }
 
@@ -216,7 +216,7 @@ function boot_instances(){
     flavor_2g=$(echo "${flavorlist}" | grep 2GB | head -n1 | awk '{ print $2 }')
     flavor_4g=$(echo "${flavorlist}" | grep 4GB | head -n1 | awk '{ print $2 }')
 
-    if !($RERUN) && !($ADD_CLIENTS)
+    if !($ADD_CLIENTS)
     then
         if ( $NOVA list | grep -q $(mangle_name) ); then
             echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
@@ -298,8 +298,10 @@ function server_setup(){
          nodes=(${nodes[@]} "opencenter-dashboard")
     fi
     for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
-        wait_for_ssh "opencenter-client${client}"
-        nodes=(${nodes[@]} "opencenter-client${client}")
+        if ( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-client${client} ); then
+            wait_for_ssh "opencenter-client${client}"
+            nodes=(${nodes[@]} "opencenter-client${client}")
+        fi
     done
 
     for svr in ${nodes[@]}; do
@@ -356,7 +358,8 @@ ARGUMENTS:
   -pkg --packages
          Install using packages
   -a --add-clients
-         Add clients to Opencenter Cluster specified by prefix
+         Add clients to Opencenter Cluster specified by Prefix
+         Can't be used in conjunction with --rerun/-rr
          NB - If password was used for original cluster, password must be the same as existing cluster's password
   -n --network=<CIDR>|<Existing network name>|<Existing network uuid>
          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
@@ -365,6 +368,9 @@ ARGUMENTS:
          Specify the OS to install on the servers - default ubuntu
   -pk --public-key=[location of key file]
          Specify the location of the key file to inject onto the cloud servers
+  -rr --rerun
+         Re-run the install scripts on the servers, rather than spin up new servers
+         Can't be used in conjunction with --add-clients/-a
 EOF
 }
 
@@ -403,6 +409,7 @@ function display_info() {
 #This is so you can set NOVA="supernova env" before running the script.
 NOVA=${NOVA:-nova}
 RERUN=${RERUN:-false}
+rerun_string=""
 USE_PACKAGES=false
 USE_NETWORK=false
 PRIV_NETWORK="192.168.0.0/24"
@@ -478,6 +485,10 @@ for arg in $@; do
             fi
             ;;
         "--add-clients" | "-a")
+            if ( $RERUN ); then
+                echo "--rerun/-rr won't work with --add-clients/-a"
+                exit 1
+            fi
             ADD_CLIENTS=true
             ;;
         "--public-key" | "-pk")
@@ -491,13 +502,21 @@ for arg in $@; do
                 fi
             fi
             ;;
+        "--rerun" | "-rr")
+            if ( $ADD_CLIENTS ); then
+                echo "--rerun/-rr won't work with --add-clients/-a"
+                exit 1
+            fi
+            RERUN=true
+            rerun_string="--rerun"
+            ;;
         "--help" | "-h")
             usage
             exit 1
             ;;
         "--verbose" | "-v")
             VERBOSE=1
-            verbose_string=" -v "
+            verbose_string="-v"
             set -x
             ;;
         "--version" | "-V")
@@ -516,7 +535,9 @@ credentials_check
 if ( $USE_NETWORK ); then
     check_network
 fi
-boot_instances
+if ( ! $RERUN ); then
+    boot_instances
+fi
 server_setup
 licensing
 display_info

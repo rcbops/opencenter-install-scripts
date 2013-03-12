@@ -100,6 +100,41 @@ function install_opencenter_apt_repo() {
   fi
 }
 
+function clean_ubuntu() {
+    local aptget=$(which apt-get)
+
+    pkg_list=( ${agent_pkgs} ${agent_plugins} )
+    if [ "${ROLE}" == "server" ]; then
+        pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+    fi
+
+    if [ "${ROLE}" == "dashboard" ]; then
+        pkg_list=( ${dashboard_pkgs} )
+    fi
+
+    if (${aptget} purge -y -q ${pkg_list}); then
+        ${aptget} autoremove -y -q
+    fi
+}
+
+function clean_yum() {
+    local yum=$(which yum)
+
+    pkg_list=( ${agent_pkgs} ${agent_plugins} )
+    if [ "${ROLE}" == "server" ]; then
+        pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+    fi
+
+    if [ "${ROLE}" == "dashboard" ]; then
+        pkg_list=( ${dashboard_pkgs} )
+    fi
+
+    if (${yum} remove -y -q ${pkg_list}); then
+        ${yum} clean packages
+    fi
+}
+
+
 function adjust_iptables() {
     if [ "${ROLE}" == "server" ]; then
         iptables -I INPUT 1 -p tcp --dport 8443 -j ACCEPT
@@ -251,7 +286,8 @@ function install_rpm() {
           echo "Failed to install opencenter-agent"
           exit 1
       fi
-      sed -i "s/admin:password/admin:${OPENCENTER_PASSWORD}/g" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
+      current_Pass=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | sed -En /"^admin =/ s/^admin = https{0,1}:\/\/admin:(.*)@[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}.*$/\1/p" )
+      sed -i "s/admin:${current_Pass}/admin:${OPENCENTER_PASSWORD}/g" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
       if [ "${distro}" == "Fedora" ]; then
           systemctl enable opencenter-agent.service
       fi 
@@ -282,7 +318,8 @@ function install_rpm() {
   elif [ "${ROLE}" == "server" ]; then
       current_IP=$( cat /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf | egrep -o -m 1 "[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}" )
       sed -i "s/${current_IP}/0.0.0.0/" /etc/opencenter/agent.conf.d/opencenter-agent-endpoints.conf
-      sed -i "s/^admin_pass = password/admin_pass = ${OPENCENTER_PASSWORD}/g" /etc/opencenter/opencenter.conf
+      current_Pass=$( cat /etc/opencenter/opencenter.conf | sed -En "/admin_pass =/ s/^admin_pass = (.*)$/\1/p")
+      sed -i "s/^admin_pass = ${current_Pass}/admin_pass = ${OPENCENTER_PASSWORD}/g" /etc/opencenter/opencenter.conf
       $stop_agent || :
       $start_agent
       $stop_opencenter || :
@@ -444,8 +481,11 @@ for arg in $@; do
             fi
             ;;
         "--password" | "-p")
-           OPENCENTER_PASSWORD=$value
-           ;;
+            OPENCENTER_PASSWORD=$value
+            ;;
+        "--rerun" | "-r")
+            RERUN=true
+            ;;
         "--help" | "-h")
             usage
             exit 1
@@ -471,6 +511,15 @@ get_platform
 # echo "Arch: ${arch}"
 # echo "Platform: ${platform}"
 # echo "Version: ${platform_version}"
+
+if ( $RERUN ); then
+    case $platform in
+        "ubuntu") clean_ubuntu ;;
+        "redhat") clean_yum "RedHat";;
+        "centos") clean_yum "CentOS";;
+        "fedoraproject") clean_yum "Fedora";;
+    esac
+fi
 
 # Run os dependent install functions
 case $platform in
