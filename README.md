@@ -109,16 +109,6 @@ you can push updates and have the services restart automaticallyL
 This should show the last 1K of the task logs, updating every 10 seconds.
     ./utils/logtail.py <task_id>
  
-Rerunning Setup Script on the 4 nodes. 
------------------------
-
-If something failed during the setup of the node and you want to re-run the setup
-script without waiting for new instances to spin up, then set RERUN=true before running
-opencenter-cluster.sh with the same prefix as used initially.
-
-    export RERUN=true
-    ./opencenter-cluster.sh <Cluster-Name>
- 
 Creating DNS records
 --------------------
 
