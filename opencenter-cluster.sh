@@ -183,6 +183,8 @@ function credentials_check(){
     then
         if [[ -f ${HOME}/csrc ]]; then
             source ${HOME}/csrc
+        elif [[ -n $OS_USERNAME ]] && [[ -n $OS_TENANT_NAME ]] && [[ -n $OS_AUTH_URL ]] && [[ -n $OS_PASSWORD ]]; then
+            echo "env variables already set"
         else
             echo "Please setup your cloud credentials file in ${HOME}/csrc"
             exit 1
@@ -424,6 +426,10 @@ ADD_CLIENTS=false
 seq_count=0
 USE_NETWORK=false
 network_value=""
+OS_AUTH_URL=${OS_AUTH_URL:-}
+OS_TENANT_NAME=${OS_TENANT_NAME:-}
+OS_USERNAME=${OS_USERNAME:-}
+OS_PASSWORD=${OS_PASSWORD:-}
 ####################
 
 for arg in $@; do
