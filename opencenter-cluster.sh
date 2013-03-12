@@ -200,7 +200,7 @@ function check_network(){
         create_network
     elif ( $NOVA network-list | grep -q " ${network_value} " ); then
         priv_network_id=$($NOVA network-list | grep ${network_value} | awk '{print $2}')
-        network_string="--nic net-id=${priv_network_id}"
+        network_string="--nic net-id=${priv_network_id} ${network_string}"
     else
         echo "Invalid Network specified"
         usage
@@ -278,14 +278,14 @@ function create_network(){
         exit 1
     fi
     priv_network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
-    network_string="--nic net-id=${priv_network_id}"
+    network_string="--nic net-id=${priv_network_id} ${network_string}"
     echo "Network ${priv_network_id} created"
 }
 
 function get_network(){
     if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX}-net ); then
         priv_network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
-        network_string="--nic net-id=${priv_network_id}"
+        network_string="--nic net-id=${priv_network_id} ${network_string}"
     fi
 }
 
@@ -422,7 +422,7 @@ IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 VERSION=1.0.0
 OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
 declare -A PIDS
-network_string=""
+network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
 verbose_string=""
 ADD_CLIENTS=false
 seq_count=0
