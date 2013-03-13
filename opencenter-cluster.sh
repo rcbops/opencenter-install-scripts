@@ -226,8 +226,8 @@ function boot_instances(){
 
     if [[ -f ${key_location} ]]; then
         if ! ( $ADD_CLIENTS ); then
-            instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
-            instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
+            opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
+            opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
         fi
         if ( $ADD_CLIENTS ); then
             if !( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-server ); then
@@ -241,7 +241,7 @@ function boot_instances(){
             seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*) .*$/\1/p" | sort -rn | head -1 )
         fi
         for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
-            instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
+            opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
         done
     else
         echo "Please setup your specified key ${key_location} file for key injection to cloud servers "
@@ -332,10 +332,6 @@ function server_setup(){
     done
 }
 
-instance_exists(){
-    name=$(mangle_name $1)
-    $NOVA list |grep -q $name
-}
 
 function usage() {
 cat <<EOF
