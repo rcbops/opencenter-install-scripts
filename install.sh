@@ -82,8 +82,9 @@ function install_opencenter_apt_repo() {
 
   if [ -e ${apt_file_path} ];
   then
-    # TODO(shep): Need to do some sort of checking here
-    /bin/true
+    if ! ( grep "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+       echo "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
+    fi
   else
     echo "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
   fi
