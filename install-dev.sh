@@ -69,22 +69,24 @@ function install_opencenter_yum_repo() {
     "RedHat") releasever="6"; releasedir="RedHat" ;;
   esac
   echo "Adding OpenCenter yum repository $releasedir/$releasever"
-  cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
-[rcb-utils]
+  if ![ -e ${yum_file_path} ] || !( grep -q "baseurl=$uri/$yum_pkg_path/$releasedir/$releasever/\$basearch/" $yum_file_path > /dev/null 2>&1 ); then
+  cat > $yum_file_path <<EOF
+[$yum_repo]
 name=RCB Utility packages for OpenCenter $1
-baseurl=$uri/$repo_path/$releasedir/$releasever/\$basearch/
+baseurl=$uri/$yum_pkg_path/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=$uri/repo-testing/RPM-GPG-RCB.key
+gpgkey=$uri/$yum_pkg_path/$yum_key
 EOF
-  rpm --import $uri/repo-testing/RPM-GPG-RCB.key &>/dev/null || :
+  fi
+  rpm --import $uri/$yum_pkg_path/$yum_key &>/dev/null || :
   if [[ $1 = "Fedora" ]]; then
       yum_opencenter_pkgs="$yum_opencenter_pkgs python-sqlalchemy"
       echo "skipping epel installation for Fedora"
   else
       yum_opencenter_pkgs="$yum_opencenter_pkgs python-sqlalchemy0.7"
       if (! rpm -q epel-release 2>&1>/dev/null ); then
-          rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+          rpm -Uvh $epel_release
           if [[ $? -ne 0 ]]; then
             echo "Unable to add the EPEL repository."
             exit 1
@@ -101,10 +103,11 @@ function install_apt_repo() {
 
   if [ -e ${apt_file_path} ];
   then
-    # TODO(shep): Need to do some sort of checking here
-    /bin/true
+    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+        echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
+    fi
   else
-    echo "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
+    echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
   fi
 
   if [[ -z $VERBOSE ]]; then
@@ -393,7 +396,6 @@ git_branch=sprint
 ####################
 # Package Variables
 uri="http://build.monkeypuppetlabs.com"
-pkg_path="/proposed-packages/"
 repo_path="repo-testing"
 apt_opencenter_pkgs="git-core python-setuptools python-cliapp gcc python-dev libevent-dev screen emacs24-nox python-all python-support python-requests python-flask python-sqlalchemy python-migrate python-daemon python-chef python-gevent python-mako python-virtualenv python-netifaces python-psutil"
 apt_dashboard_pkgs="build-essential git"
@@ -402,11 +404,25 @@ yum_dashboard_pkgs="gcc gcc-c++ make kernel-devel git"
 ####################
 
 ####################
-# APT Specific variables
+# APT Specific Variables #
+apt_pkg_path="proposed-packages/"
 apt_repo="rcb-utils"
 apt_key="765C5E49F87CBDE0"
 apt_file_name="${apt_repo}.list"
 apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
+####################
+
+####################
+# YUM Specific Variables #
+yum_repo="rcb-utils"
+yum_pkg_path="repo-testing"
+yum_key="RPM-GPG-RCB.key"
+yum_file_name="${yum_repo}.repo"
+yum_file_path="/etc/yum.repos.d/${yum_file_name}"
+epel_release="http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
+####################
+
+
 
 for arg in $@; do
     flag=$(echo $arg | cut -d "=" -f1)

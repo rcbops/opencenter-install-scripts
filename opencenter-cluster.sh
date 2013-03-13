@@ -226,8 +226,8 @@ function boot_instances(){
 
     if [[ -f ${key_location} ]]; then
         if ! ( $ADD_CLIENTS ); then
-            instance_exists opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
-            instance_exists opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
+            $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
+            $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
         fi
         if ( $ADD_CLIENTS ); then
             if !( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-server ); then
@@ -236,12 +236,11 @@ function boot_instances(){
                 exit 1
             fi
             echo "Adding additional Clients"
-            check_install_type
             get_network
             seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*) .*$/\1/p" | sort -rn | head -1 )
         fi
         for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
-            instance_exists opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
+            $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
         done
     else
         echo "Please setup your specified key ${key_location} file for key injection to cloud servers "
@@ -332,10 +331,6 @@ function server_setup(){
     done
 }
 
-instance_exists(){
-    name=$(mangle_name $1)
-    $NOVA list |grep -q $name
-}
 
 function usage() {
 cat <<EOF
@@ -408,38 +403,53 @@ function display_info() {
 #command to use for nova; read from environment or "nova" by default.
 #This is so you can set NOVA="supernova env" before running the script.
 NOVA=${NOVA:-nova}
-RERUN=${RERUN:-false}
-rerun_string=""
-USE_PACKAGES=false
-USE_NETWORK=false
-PRIV_NETWORK="192.168.0.0/24"
-CLUSTER_PREFIX="c1"
-CLIENT_COUNT=2
+VERSION=1.0.0
 if [ -L $0 ]; then
     BASEDIR=$(dirname $(readlink $0))
 else
     BASEDIR=$(dirname $0)
 fi
-SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+declare -A PIDS
+####################
+
+####################
+#  Flag Variables  #
+RERUN=${RERUN:-false}
+USE_PACKAGES=false
+USE_NETWORK=false
+PRIV_NETWORK="192.168.0.0/24"
+CLUSTER_PREFIX="c1"
+CLIENT_COUNT=2
+IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
+ADD_CLIENTS=false
+USE_NETWORK=false
+OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
+seq_count=0
+####################
+
+####################
+# Output Variables #
 DASHBOARD_PORT=3000
 DASHBOARD_PROTO=http
 server_port=8080
-USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network(=<CIDR>)]"
-IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
-VERSION=1.0.0
-OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
-declare -A PIDS
-network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
-verbose_string=""
-ADD_CLIENTS=false
-seq_count=0
-USE_NETWORK=false
-network_value=""
+####################
+
+####################
+#  Check ENV Vars  #
 OS_AUTH_URL=${OS_AUTH_URL:-}
 OS_TENANT_NAME=${OS_TENANT_NAME:-}
 OS_USERNAME=${OS_USERNAME:-}
 OS_PASSWORD=${OS_PASSWORD:-}
+####################
+
+####################
+# Boot String Vars #
+network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
+network_value=""
+verbose_string=""
+rerun_string=""
 key_location=${HOME}/.ssh/authorized_keys
+SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 ####################
 
 for arg in $@; do
@@ -534,6 +544,9 @@ done
 credentials_check
 if ( $USE_NETWORK ); then
     check_network
+fi
+if ( $RERUN ) || ( $ADD_CLIENTS); then
+    check_install_type
 fi
 if ( ! $RERUN ); then
     boot_instances
