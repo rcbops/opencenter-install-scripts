@@ -34,11 +34,25 @@ function verify_apt_package_exists() {
     dpkg -s $1
   fi
 
-  if [ $? -ne 0 ];
-  then
+  if [ $? -ne 0 ]; then
     return 1
   else
     return 0
+  fi
+}
+
+function verify_yum_package_exists() {
+  # $1 - name of package to test
+  if [[ -z $VERBOSE ]]; then
+      rpm -q $1 --quiet
+  else
+      rpm -q $1
+  fi
+
+  if [ $? -ne 0 ]; then
+      return 1
+  else
+      return 0
   fi
 }
 
@@ -231,11 +245,11 @@ EOF
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${dashboard_pkgs} )
   fi
-  for x in ${pkg_list[@]}; do
-    if ! verify_apt_package_exists ${x};
+  for pkg in ${pkg_list[@]}; do
+    if ! verify_apt_package_exists ${pkg};
     then
-      echo "Package ${x} was not installed successfully"
-      echo ".. please run dpkg -i ${x} for more information"
+      echo "Package ${pkg} was not installed successfully"
+      echo ".. please run dpkg -i ${pkg} for more information"
       exit 1
     fi
   done
@@ -327,6 +341,24 @@ function install_rpm() {
       $stop_opencenter || :
       $start_opencenter
   fi
+
+  echo ""
+  echo "Verifying packages installed successfully"
+  pkg_list=( ${agent_pkgs} ${agent_plugins} )
+  if [ "${ROLE}" == "server" ]; then
+      pkg_list=( ${server_pkgs} ${agent_pkgs} ${agent_plugins} )
+  fi
+  if [ "${ROLE}" == "dashboard" ]; then
+      pkg_list=( ${dashboard_pkgs} )
+  fi
+  for pkg in ${pkg_list[@]}; do
+      if ! verify_yum_package_exists ${pkg}; then
+          echo "Package ${pkg} was not installed successfully"
+          echo ".. please run a manual yum install ${pkg} for more information"
+          exit 1
+      fi
+  done
+
   adjust_iptables
 }
 
