@@ -408,38 +408,53 @@ function display_info() {
 #command to use for nova; read from environment or "nova" by default.
 #This is so you can set NOVA="supernova env" before running the script.
 NOVA=${NOVA:-nova}
-RERUN=${RERUN:-false}
-rerun_string=""
-USE_PACKAGES=false
-USE_NETWORK=false
-PRIV_NETWORK="192.168.0.0/24"
-CLUSTER_PREFIX="c1"
-CLIENT_COUNT=2
+VERSION=1.0.0
 if [ -L $0 ]; then
     BASEDIR=$(dirname $(readlink $0))
 else
     BASEDIR=$(dirname $0)
 fi
-SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+declare -A PIDS
+####################
+
+####################
+#  Flag Variables  #
+RERUN=${RERUN:-false}
+USE_PACKAGES=false
+USE_NETWORK=false
+PRIV_NETWORK="192.168.0.0/24"
+CLUSTER_PREFIX="c1"
+CLIENT_COUNT=2
+IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
+ADD_CLIENTS=false
+USE_NETWORK=false
+OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
+seq_count=0
+####################
+
+####################
+# Output Variables #
 DASHBOARD_PORT=3000
 DASHBOARD_PROTO=http
 server_port=8080
-USAGE="Usage: opencenter-cluster.sh <Cluster-Prefix> <Number of Clients> [--packages] [--network(=<CIDR>)]"
-IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
-VERSION=1.0.0
-OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
-declare -A PIDS
-network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
-verbose_string=""
-ADD_CLIENTS=false
-seq_count=0
-USE_NETWORK=false
-network_value=""
+####################
+
+####################
+#  Check ENV Vars  #
 OS_AUTH_URL=${OS_AUTH_URL:-}
 OS_TENANT_NAME=${OS_TENANT_NAME:-}
 OS_USERNAME=${OS_USERNAME:-}
 OS_PASSWORD=${OS_PASSWORD:-}
+####################
+
+####################
+# Boot String Vars #
+network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
+network_value=""
+verbose_string=""
+rerun_string=""
 key_location=${HOME}/.ssh/authorized_keys
+SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 ####################
 
 for arg in $@; do
