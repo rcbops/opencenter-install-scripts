@@ -248,11 +248,11 @@ function install_ubuntu() {
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${apt_dashboard_pkgs} )
   fi
-  for x in ${pkg_list[@]}; do
-    if ! verify_apt_package_exists ${x};
+  for pkg in ${pkg_list[@]}; do
+    if ! verify_apt_package_exists ${pkg};
     then
-      echo "Package ${x} was not installed successfully"
-      echo ".. please run dpkg -i ${x} for more information"
+      echo "Package ${pkg} was not installed successfully"
+      echo ".. please run dpkg -i ${pkg} for more information"
       exit 1
     fi
   done
@@ -293,11 +293,11 @@ function install_rhel() {
   if [ "${ROLE}" == "dashboard" ]; then
       pkg_list=( ${yum_dashboard_pkgs} )
   fi
-  for x in ${pkg_list[@]}; do
-    if ! verify_yum_package_exists ${x};
+  for pkg in ${pkg_list[@]}; do
+    if ! verify_yum_package_exists ${pkg};
     then
-      echo "Package ${x} was not installed successfully"
-      echo ".. please run rpm -q ${x} for more information"
+      echo "Package ${pkg} was not installed successfully"
+      echo ".. please run a manual yum install ${pkg} for more information"
       exit 1
     fi
   done
