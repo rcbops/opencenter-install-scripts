@@ -226,8 +226,8 @@ function boot_instances(){
 
     if [[ -f ${key_location} ]]; then
         if ! ( $ADD_CLIENTS ); then
-            opencenter-server || $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
-            opencenter-dashboard || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
+            $NOVA boot --flavor=${flavor_4g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-server) > /dev/null 2>&1
+            $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
         fi
         if ( $ADD_CLIENTS ); then
             if !( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-server ); then
@@ -236,12 +236,11 @@ function boot_instances(){
                 exit 1
             fi
             echo "Adding additional Clients"
-            check_install_type
             get_network
             seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*) .*$/\1/p" | sort -rn | head -1 )
         fi
         for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
-            opencenter-client${client} || $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
+            $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
         done
     else
         echo "Please setup your specified key ${key_location} file for key injection to cloud servers "
@@ -545,6 +544,9 @@ done
 credentials_check
 if ( $USE_NETWORK ); then
     check_network
+fi
+if ( $RERUN ) || ( $ADD_CLIENTS); then
+    check_install_type
 fi
 if ( ! $RERUN ); then
     boot_instances

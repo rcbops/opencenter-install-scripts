@@ -52,20 +52,22 @@ function install_opencenter_yum_repo() {
     "RedHat") releasever="6"; releasedir="RedHat" ;;
   esac
   echo "Adding OpenCenter yum repository $releasedir/$releasever"
-  cat > /etc/yum.repos.d/rcb-utils.repo <<EOF
-[rcb-utils]
+  if ![ -e ${yum_file_path} ] || !( grep -q "baseurl=$uri/$yum_pkg_path/$releasedir/$releasever/\$basearch/" $yum_file_path > /dev/null 2>&1 ); then
+      cat > $yum_file_path <<EOF
+[$yum_repo]
 name=RCB Utility packages for OpenCenter $1
-baseurl=$uri/stable/rpm/$releasedir/$releasever/\$basearch/
+baseurl=$uri/$yum_pkg_path/$releasedir/$releasever/\$basearch/
 enabled=1
 gpgcheck=1
-gpgkey=$uri/stable/rpm/RPM-GPG-RCB.key
+gpgkey=$uri/$yum_pkg_path/$yum_key
 EOF
-  rpm --import $uri/stable/rpm/RPM-GPG-RCB.key &>/dev/null || :
+  fi
+  rpm --import $uri/$yum_pkg_path/$yum_key &>/dev/null || :
   if [[ $1 = "Fedora" ]]; then
       echo "skipping epel installation for Fedora"
   else
       if (! rpm -q epel-release 2>&1>/dev/null ); then
-          rpm -Uvh http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm
+          rpm -Uvh $epel_release
           if [[ $? -ne 0 ]]; then
             echo "Unable to add the EPEL repository."
             exit 1
@@ -80,13 +82,12 @@ function install_opencenter_apt_repo() {
 
   echo "Adding Opencenter apt repository"
 
-  if [ -e ${apt_file_path} ];
-  then
-    if ! ( grep "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
-       echo "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
+  if [ -e ${apt_file_path} ]; then
+    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+       echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
     fi
   else
-    echo "deb ${uri}/${pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
+    echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
   fi
 
   if [[ -z $VERBOSE ]]; then
@@ -444,7 +445,6 @@ OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"password"}
 ####################
 # Package Variables
 uri="http://packages.opencenter.rackspace.com"
-pkg_path="/stable/deb/rcb-utils/"
 server_pkgs="opencenter-server python-opencenter opencenter-client opencenter-agent-output-adventurator"
 agent_pkgs="opencenter-agent"
 agent_plugins="opencenter-agent-input-task opencenter-agent-output-chef opencenter-agent-output-service opencenter-agent-output-packages opencenter-agent-output-openstack opencenter-agent-output-update-actions"
@@ -457,6 +457,17 @@ apt_repo="rcb-utils"
 apt_key="765C5E49F87CBDE0"
 apt_file_name="${apt_repo}.list"
 apt_file_path="/etc/apt/sources.list.d/${apt_file_name}"
+apt_pkg_path="stable/deb/rcb-utils/"
+####################
+
+####################
+# YUM Specific variables #
+yum_repo="rcb-utils"
+yum_key="RPM-GPG-RCB.key"
+yum_file_name="${yum_repo}.repo"
+yum_file_path="/etc/yum.repos.d/${yum_file_name}"
+yum_pkg_path="stable/rpm"
+epel_release="http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
 ####################
 
 for arg in $@; do
