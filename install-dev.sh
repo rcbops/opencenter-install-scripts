@@ -144,9 +144,24 @@ function do_git_update() {
     fi
 }
 
+function do_git_remove() {
+    # $1 = repo name
+    repo=$1
+    if [ -d ${repo} ]; then
+        pushd ${repo}
+        git reset --hard origin/sprint
+        popd
+    fi
+}
+
 
 function git_setup() {
   if [ "${ROLE}" != "dashboard" ]; then
+      if ( $RERUN ); then
+         do_git_remove opencenter
+         do_git_remove opencenter-agent
+         do_git_remove opencenter-client
+      fi
       do_git_update opencenter
       do_git_update opencenter-agent
       do_git_update opencenter-client
@@ -185,6 +200,9 @@ EOF
   fi
 
   if [ "${ROLE}" == "dashboard" ]; then
+      if ( $RERUN ); then
+          do_git_remove opencenter-dashboard
+      fi
       nvmVersion=0.8.18
       rm -rf .nvm .bower .anvil* .npm
       curl https://raw.github.com/creationix/nvm/master/install.sh | sh
@@ -323,8 +341,8 @@ ARGUMENTS:
   -i --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
   -rr --rerun
-         Rerun the script without having to create a new SERVER_PORT
-         Currently not required for install-dev since repo's will be updated
+         Rerun the script without having to create a new server
+         Can be used to adjust IP information
 EOF
 }
 
@@ -445,8 +463,7 @@ for arg in $@; do
                 exit 1
             fi
             ;;
-        "--rerun" | "-r")
-            # Currently not required for install-dev.sh since it will be re-setup anyway!
+        "--rerun" | "-rr")
             RERUN=true
             ;;
         "--help" | "-h")

@@ -320,7 +320,7 @@ function server_setup(){
     done
 
     for pid in ${!PIDS[@]}; do
-        echo "Waiting on pid ${pid}: ${PIDS[${pid}]}"
+        echo "Waiting on pid ${pid}: $(mangle_name ${PIDS[${pid}]})"
         if [ ${pid} -ne 0 ]; then
             wait ${pid} > /dev/null 2>&1
             echo "Reaped ${pid}"
