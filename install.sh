@@ -383,6 +383,9 @@ ARGUMENTS:
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
   -p --password=<Opencenter Server IP>
          Specify the Opencenter Server Password - defaults to "password"
+  -rr --rerun
+         Removes packages and reinstalls them
+         Can be used to adjust IP/password information
 EOF
 }
 
@@ -529,7 +532,7 @@ for arg in $@; do
         "--password" | "-p")
             OPENCENTER_PASSWORD=$value
             ;;
-        "--rerun" | "-r")
+        "--rerun" | "-rr")
             RERUN=true
             ;;
         "--help" | "-h")
