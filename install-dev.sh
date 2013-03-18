@@ -341,8 +341,8 @@ ARGUMENTS:
   -i --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
   -rr --rerun
-         Rerun the script without having to create a new SERVER_PORT
-         Currently not required for install-dev since repo's will be updated
+         Rerun the script without having to create a new server
+         Can be used to adjust IP information
 EOF
 }
 
@@ -464,7 +464,6 @@ for arg in $@; do
             fi
             ;;
         "--rerun" | "-rr")
-            # Currently not required for install-dev.sh since it will be re-setup anyway!
             RERUN=true
             ;;
         "--help" | "-h")
