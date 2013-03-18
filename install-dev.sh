@@ -144,9 +144,22 @@ function do_git_update() {
     fi
 }
 
+function do_git_remove() {
+    # $1 = repo name
+    repo=$1
+    if [ -d ${repo} ]; then
+        rm -rf ${repo}
+    fi
+}
+
 
 function git_setup() {
   if [ "${ROLE}" != "dashboard" ]; then
+      if ( $RERUN ); then
+         do_git_remove opencenter
+         do_git_remove opencenter-agent
+         do_git_remove opencenter-client
+      fi
       do_git_update opencenter
       do_git_update opencenter-agent
       do_git_update opencenter-client
@@ -185,6 +198,9 @@ EOF
   fi
 
   if [ "${ROLE}" == "dashboard" ]; then
+      if ( $RERUN ); then
+          do_git_remove opencenter-dashboard
+      fi
       nvmVersion=0.8.18
       rm -rf .nvm .bower .anvil* .npm
       curl https://raw.github.com/creationix/nvm/master/install.sh | sh
@@ -445,7 +461,7 @@ for arg in $@; do
                 exit 1
             fi
             ;;
-        "--rerun" | "-r")
+        "--rerun" | "-rr")
             # Currently not required for install-dev.sh since it will be re-setup anyway!
             RERUN=true
             ;;
