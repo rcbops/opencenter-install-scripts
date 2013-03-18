@@ -148,7 +148,9 @@ function do_git_remove() {
     # $1 = repo name
     repo=$1
     if [ -d ${repo} ]; then
-        rm -rf ${repo}
+        pushd ${repo}
+        git reset --hard origin/sprint
+        popd
     fi
 }
 
