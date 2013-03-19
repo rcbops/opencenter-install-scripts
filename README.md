@@ -109,6 +109,10 @@ you can push updates and have the services restart automaticallyL
             Specify the projects to push - defaults to opencenter-all
        -r --repo-path=<Local path to repositories>
             Specify the local path to your repositories
+       -rs --rsync
+            Use rsync instead of git to push the repos
+       -f --force
+            Use "git push -f" to force the push
 
  Tailing Task Logs on Opencenter servers:
 -----------------------
