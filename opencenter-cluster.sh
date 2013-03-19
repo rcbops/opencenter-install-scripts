@@ -522,7 +522,7 @@ for arg in $@; do
             ;;
         "--help" | "-h")
             usage
-            exit 1
+            exit 0
             ;;
         "--verbose" | "-v")
             VERBOSE=1
@@ -531,7 +531,7 @@ for arg in $@; do
             ;;
         "--version" | "-V")
             display_version
-            exit 1
+            exit 0
             ;;
         *)
             echo "Invalid option $flag"
