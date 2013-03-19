@@ -30,8 +30,8 @@ function on_exit() {
     if [ $? -ne 0 ]; then
         echo -e "\nERROR:\n"
         cat /tmp/push.log
-        rm /tmp/push.log
     fi
+    rm /tmp/push.log
 }
 
 
@@ -90,7 +90,7 @@ function push_opencenter_agent() {
     repo="opencenter"
     repo_push $repo $ip
     echo " - restarting opencenter-agent"
-    ssh ${SSHOPTS} root@${ip} /bin/bash -c "cd opencenter-agent; cd opencenter-agent; PYTHONPATH=../opencenter screen -S opencenter-agent -d -m ./opencenter-agent.py -v -c ./local.conf"
+    ssh ${SSHOPTS} root@${ip} /bin/bash -c "cd opencenter-agent; cd opencenter-agent; PYTHONPATH=../opencenter screen -S opencenter-agent -d -m ./opencenter-agent.py -v -c ./local.conf" >&99 2>&1
 }
 function push_opencenter_server() {
     if [ ! -d ${REPO_PATH}opencenter ]; then
@@ -104,7 +104,7 @@ function push_opencenter_server() {
     ssh ${SSHOPTS} root@${ip} 'if (pgrep -f opencenter.p[y]); then pkill -f opencenter.p[y]; fi' >&99 2>&1
     repo="opencenter"
     repo_push $repo $ip
-    echo " - Restarting opencenter"
+    echo " - restarting opencenter"
     ssh ${SSHOPTS} root@${ip} /bin/bash -c 'cd /root/opencenter; cd /root/opencenter; screen -S opencenter-server -d -m ./opencenter.py -v -c ./local.conf' >&99 2>&1
 }
 
