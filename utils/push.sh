@@ -68,7 +68,7 @@ function repo_push() {
         if [ -f ${SCRIPT_DIR}/GIT_SSH ]; then
             export GIT_SSH="${SCRIPT_DIR}/GIT_SSH"
         fi
-        git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:master >&99 2>&1
+        git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:sprint >&99 2>&1
         ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
     fi
     popd >&99 2>&1
@@ -154,6 +154,10 @@ ARGUMENTS:
          Specify the projects to push - defaults to opencenter-all
   -r --repo-path=<Local path to repositories>
          Specify the local path to your repositories
+  -rs --rsync
+         Use rsync instead of git to push the repos
+  -f --force
+         Use "git push -f" to force the push
 EOF
 }
 
@@ -178,6 +182,7 @@ CLUSTER_PREFIX="c1"
 PUSH_PROJECT="opencenter-all"
 VERSION=1.0.0
 VERBOSE=
+OC_SYNC='git'
 ####################
 
 ####################
@@ -200,19 +205,25 @@ for arg in $@; do
             PUSH_PROJECT=$value
             ;;
         "--repo-path" | "-r")
-           REPO_PATH=$value
-           last_char=${REPO_PATH: -1:1}
-           if [ $last_char != / ]; then
-               REPO_PATH="$REPO_PATH"/
-           fi
-           if [ ! -d ${REPO_PATH}opencenter-agent ] && [ ! -d ${REPO_PATH}opencenter ] && [ ! -d ${REPO_PATH}opencenter-client ] && [ ! -d ${REPO_PATH}opencenter-dashboard ]; then
-               echo "No repo's in specified path"
-               exit 1
-           fi
-           ;;
+            REPO_PATH=$value
+            last_char=${REPO_PATH: -1:1}
+            if [ $last_char != / ]; then
+                REPO_PATH="$REPO_PATH"/
+            fi
+            if [ ! -d ${REPO_PATH}opencenter-agent ] && [ ! -d ${REPO_PATH}opencenter ] && [ ! -d ${REPO_PATH}opencenter-client ] && [ ! -d ${REPO_PATH}opencenter-dashboard ]; then
+                echo "No repo's in specified path"
+                exit 1
+            fi
+            ;;
+        "--rsync" | "-rs")
+            OC_SYNC='rsync'
+            ;;
+        "--force" | "-f")
+            PUSHOPTS="${PUSHOPTS} -f"
+            ;;
         "--help" | "-h")
             usage
-            exit 1
+            exit 0
             ;;
         "--verbose" | "-v")
             VERBOSE=1
@@ -220,7 +231,7 @@ for arg in $@; do
             ;;
         "--version" | "-V")
             display_version
-            exit 1
+            exit 0
             ;;
         *)
             echo "Invalid Option $flag"
