@@ -27,9 +27,16 @@
 set -e
 
 function delete_items {
+    nova_uuid=""
     for item in ${items}; do
         echo "Deleting ${item}"
-        $NOVA delete ${item}
+        uuid=$($NOVA list | grep ${item} | awk '{print $2}' | head -1)
+        if [[ ${nova_uuid} = ${uuid} ]]; then
+            nova_uuid=$($NOVA list | grep ${item} | awk '{print $2}' | tail -1)
+        else
+            nova_uuid=$uuid
+        fi
+        $NOVA delete ${nova_uuid}
         [ -e /tmp/${item}.log ] && rm /tmp/${item}.log
     done
 }
@@ -95,11 +102,9 @@ for arg in $@; do
                 CLUSTER_SUFFIX=$value
                 first_char=${CLUSTER_SUFFIX: 0:1}
                 if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
-                    echo "$CLUSTER_SUFFIX - adding ."
                     CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
                 elif [ $CLUSTER_SUFFIX = "None" ]; then
                     CLUSTER_SUFFIX=""
-                    echo "$CLUSTER_SUFFIX"
                 fi
             fi
             ;;

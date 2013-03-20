@@ -297,7 +297,7 @@ function server_setup(){
          nodes=(${nodes[@]} "opencenter-dashboard")
     fi
     for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
-        if ( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-client${client} ); then
+        if ( $NOVA list | grep -q "${CLUSTER_PREFIX}-opencenter-client${client}${CLUSTER_SUFFIX} " ); then
             wait_for_ssh "opencenter-client${client}"
             nodes=(${nodes[@]} "opencenter-client${client}")
         fi
