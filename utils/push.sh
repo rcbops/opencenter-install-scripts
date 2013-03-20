@@ -41,7 +41,7 @@ function mangle_name() {
     if [[ ${server} == ${CLUSTER_PREFIX}* ]]; then
         echo ${server}
     else
-        echo ${CLUSTER_PREFIX}-${server}
+        echo ${CLUSTER_PREFIX}-${server}${CLUSTER_SUFFIX}
     fi
 }
 
@@ -150,6 +150,9 @@ OPTIONS:
 ARGUMENTS:
   -p --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
+  -s --suffix=<Cluster Suffix>
+         Specify a cluster suffix - default ".opencentre.com"
+         Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
   -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
          Specify the projects to push - defaults to opencenter-all
   -r --repo-path=<Local path to repositories>
@@ -179,6 +182,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 PUSHOPTS="${PUSHOPTS}"
 CLUSTER_PREFIX="c1"
+CLUSTER_SUFFIX=".opencentre.com"
 PUSH_PROJECT="opencenter-all"
 VERSION=1.0.0
 VERBOSE=
@@ -199,7 +203,20 @@ for arg in $@; do
     value=$(echo $arg | cut -d "=" -f2)
     case $flag in
         "--prefix" | "-p")
-            CLUSTER_PREFIX=$value
+            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+                CLUSTER_PREFIX=$value
+            fi
+            ;;
+        "--suffix" | "-s")
+            if [ "$value" != "--suffix" ] && [ "$value" != "-s" ]; then
+                CLUSTER_SUFFIX=$value
+                first_char=${CLUSTER_SUFFIX: 0:1}
+                if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
+                    CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
+                elif [ $CLUSTER_SUFFIX = "None" ]; then
+                    CLUSTER_SUFFIX=""
+                fi
+            fi
             ;;
         "--project" | "-proj")
             PUSH_PROJECT=$value
@@ -241,7 +258,7 @@ for arg in $@; do
     esac
 done
 
-nodes=$($NOVA list | awk "\$4~/^\\s*${CLUSTER_PREFIX}-/{print \$4}")
+nodes=$($NOVA list | egrep -i "${CLUSTER_PREFIX}-opencenter-(client|server|dashboard)[0-9]*${CLUSTER_SUFFIX} " | awk '{print $4}' )
 for node in ${nodes}; do
     IPADDRS[$node]=$(ip_for ${node})
 done
