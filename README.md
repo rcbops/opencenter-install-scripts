@@ -19,6 +19,7 @@ Installing Opencenter Cluster
           Specify the name prefix for the cluster - default "c1"
       -s --suffix=<Cluster Suffix>
           Specify a cluster suffix - default ".opencentre.com"
+          Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
       -c --clients=<Number of Clients>
           Specify the number of clients to install, in conjunction with a server & dashboard - default 2
       -pass --password=<Opencenter Server Password>
@@ -101,6 +102,7 @@ Wiping the Cluster
             Specify the name prefix for the cluster - default "c1"
       -s --suffix=<Cluster Suffix>
             Specify a cluster suffix - defaults ".opencenter.com"
+            Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
 
 
 This will remove all cloud servers in the cluster and delete the specific logs in /tmp

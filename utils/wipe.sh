@@ -61,6 +61,7 @@ ARGUMENTS:
         Specify the name prefix for the cluster - default "c1"
   -s --suffix=<Cluster Suffix>
         Specify a cluster suffix - defaults ".opencentre.com"
+        Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
 EOF
 }
 
