@@ -131,6 +131,15 @@ function adjust_iptables() {
         iptables-save > /etc/sysconfig/iptables
     fi
 }
+
+function setup_aliases() {
+    # server and dashboard roles presumably aren't running chef-client, so
+    # should be safe to make local modification here
+    if [ "${ROLE}" != "agent" ]; then
+        echo -e "\nalias occ='opencentercli'" >> /root/.bashrc
+    fi
+}
+
 function do_git_update() {
     # $1 = repo name
     repo=$1
@@ -274,7 +283,9 @@ function install_ubuntu() {
       exit 1
     fi
   done
+
   git_setup
+  setup_aliases
 }
 
 
@@ -322,6 +333,7 @@ function install_rhel() {
 
   git_setup
   adjust_iptables
+  setup_aliases
 }
 
 function usage() {
