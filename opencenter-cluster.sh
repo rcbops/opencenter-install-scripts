@@ -466,7 +466,7 @@ for arg in $@; do
             fi
             ;;
         "--suffix" | "-s")
-            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+            if [ "$value" != "--suffix" ] && [ "$value" != "-s" ]; then
                 CLUSTER_SUFFIX=$value
                 first_char=${CLUSTER_SUFFIX: 0:1}
                 if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
