@@ -17,6 +17,8 @@ Installing Opencenter Cluster
     ARGUMENTS:
       -p --prefix=<Cluster Prefix>
           Specify the name prefix for the cluster - default "c1"
+      -s --suffix=<Cluster Suffix>
+          Specify a cluster suffix - default ".opencenter.com"
       -c --clients=<Number of Clients>
           Specify the number of clients to install, in conjunction with a server & dashboard - default 2
       -pass --password=<Opencenter Server Password>
@@ -85,9 +87,24 @@ Installing individual servers
 Wiping the Cluster 
 -----------------------
 
-    ./utils/wipe.sh <Cluster-Name>
+    ./utils/wipe.sh
+
+    This script will delete an OpenCenter Cluster.
+
+    OPTIONS:
+      -h --help  Show this message
+      -v --verbose  Verbose output
+      -V --version  Output the version of this script
+
+    ARGUMENTS:
+      -p --prefix=<Cluster Prefix>
+            Specify the name prefix for the cluster - default "c1"
+      -s --suffix=<Cluster Suffix>
+            Specify a cluster suffix - defaults ".opencenter.com"
+
 
 This will remove all cloud servers in the cluster and delete the specific logs in /tmp
+Simply using ./utils/wipe.sh <Cluster-Prefix> will attempt to wipe that cluster prefix
 
 Pushing updates to the Cluster
 -----------------------
