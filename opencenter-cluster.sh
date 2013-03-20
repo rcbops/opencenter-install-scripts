@@ -218,8 +218,8 @@ function boot_instances(){
 
     if !($ADD_CLIENTS)
     then
-        if ( $NOVA list | grep -q "${CLUSTER_PREFIX}-" ); then
-            echo "${CLUSTER_PREFIX}- prefix is already in use, select another, or delete existing servers"
+        if ( $NOVA list | egrep -q "${CLUSTER_PREFIX}-opencenter-(client|server|dashboard)[0-9]*${CLUSTER_SUFFIX} " ); then
+            echo "${CLUSTER_PREFIX}- ${CLUSTER_SUFFIX} Prefix/Suffix combination is already in use, select another, or delete existing servers"
             exit 1
         fi
     fi
@@ -347,7 +347,8 @@ ARGUMENTS:
   -p --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
   -s --suffix=<Cluster Suffix>
-         Specify a cluster suffix - default ".opencenter.com"
+         Specify a cluster suffix - default ".opencentre.com"
+         Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
   -c --clients=<Number of Clients>
          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
   -pass --password=<Opencenter Server Password>
@@ -421,7 +422,7 @@ USE_PACKAGES=false
 USE_NETWORK=false
 PRIV_NETWORK="192.168.0.0/24"
 CLUSTER_PREFIX="c1"
-CLUSTER_SUFFIX=".opencenter.com"
+CLUSTER_SUFFIX=".opencentre.com"
 CLIENT_COUNT=2
 IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 ADD_CLIENTS=false
@@ -468,8 +469,10 @@ for arg in $@; do
             if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
                 CLUSTER_SUFFIX=$value
                 first_char=${CLUSTER_SUFFIX: 0:1}
-                if [ $first_char != . ]; then
+                if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
                     CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
+                elif [ $CLUSTER_SUFFIX = "None" ]; then
+                    CLUSTER_SUFFIX=""
                 fi
             fi
             ;;
