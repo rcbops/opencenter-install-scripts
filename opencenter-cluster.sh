@@ -32,7 +32,7 @@ function mangle_name() {
     if [[ ${server} == ${CLUSTER_PREFIX}* ]]; then
         echo ${server}
     else
-        echo ${CLUSTER_PREFIX}-${server}
+        echo ${CLUSTER_PREFIX}-${server}${CLUSTER_SUFFIX}
     fi
 }
 
@@ -218,8 +218,8 @@ function boot_instances(){
 
     if !($ADD_CLIENTS)
     then
-        if ( $NOVA list | grep -q $(mangle_name) ); then
-            echo "$(mangle_name) prefix is already in use, select another, or delete existing servers"
+        if ( $NOVA list | grep -q "${CLUSTER_PREFIX}-" ); then
+            echo "${CLUSTER_PREFIX}- prefix is already in use, select another, or delete existing servers"
             exit 1
         fi
     fi
@@ -230,14 +230,14 @@ function boot_instances(){
             $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-dashboard) > /dev/null 2>&1
         fi
         if ( $ADD_CLIENTS ); then
-            if !( $NOVA list | grep -q ${CLUSTER_PREFIX}-opencenter-server ); then
+            if !( $NOVA list | grep -q $(mangle_name opencenter-server) ); then
                 echo "There is no server with the specified prefix"
                 usage
                 exit 1
             fi
             echo "Adding additional Clients"
             get_network
-            seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*) .*$/\1/p" | sort -rn | head -1 )
+            seq_count=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*)${CLUSTER_SUFFIX} .*$/\1/p" | sort -rn | head -1 )
         fi
         for client in $(seq $((seq_count + 1)) $((CLIENT_COUNT + seq_count))); do
             $NOVA boot --flavor=${flavor_2g} --image ${image} ${network_string} --file /root/.ssh/authorized_keys=${key_location} $(mangle_name opencenter-client${client}) > /dev/null 2>&1
@@ -336,7 +336,7 @@ function usage() {
 cat <<EOF
 usage: $0 options
 
-This script will install opencenter packages.
+This script will install an OpenCenter Cluster.
 
 OPTIONS:
   -h --help  Show this message
@@ -346,6 +346,8 @@ OPTIONS:
 ARGUMENTS:
   -p --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
+  -s --suffix=<Cluster Suffix>
+         Specify a cluster suffix - default ".opencenter.com"
   -c --clients=<Number of Clients>
          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
   -pass --password=<Opencenter Server Password>
@@ -419,6 +421,7 @@ USE_PACKAGES=false
 USE_NETWORK=false
 PRIV_NETWORK="192.168.0.0/24"
 CLUSTER_PREFIX="c1"
+CLUSTER_SUFFIX=".opencenter.com"
 CLIENT_COUNT=2
 IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 ADD_CLIENTS=false
@@ -459,6 +462,15 @@ for arg in $@; do
         "--prefix" | "-p")
             if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
                 CLUSTER_PREFIX=$value
+            fi
+            ;;
+        "--suffix" | "-s")
+            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+                CLUSTER_SUFFIX=$value
+                first_char=${CLUSTER_SUFFIX: 0:1}
+                if [ $first_char != . ]; then
+                    CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
+                fi
             fi
             ;;
         "--network" | "-n")
@@ -547,6 +559,16 @@ if ( $USE_NETWORK ); then
 fi
 if ( $RERUN ) || ( $ADD_CLIENTS); then
     check_install_type
+fi
+if ( $RERUN ); then
+    if ( $NOVA list | egrep " ${CLUSTER_PREFIX}-opencenter-client[0-9]*${CLUSTER_SUFFIX} "); then
+        CLIENT_COUNT=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*)${CLUSTER_SUFFIX} .*$/\1/p" | sort -rn | head -1 )
+    elif ( $NOVA list | egrep " ${CLUSTER_PREFIX}-opencenter-server${CLUSTER_SUFFIX} "); then
+        CLIENT_COUNT=0
+    else
+        echo "There is no server with that prefix to re-run"
+        exit 1
+    fi
 fi
 if ( ! $RERUN ); then
     boot_instances
