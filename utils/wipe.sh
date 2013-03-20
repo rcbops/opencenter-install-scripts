@@ -60,7 +60,7 @@ ARGUMENTS:
   -p --prefix=<Cluster Prefix>
         Specify the name prefix for the cluster - default "c1"
   -s --suffix=<Cluster Suffix>
-        Specify a cluster suffix - defaults ".opencenter.com"
+        Specify a cluster suffix - defaults ".opencentre.com"
 EOF
 }
 
@@ -74,9 +74,8 @@ EOF
 ####################
 # Global Variables #
 NOVA=${NOVA:-nova}
-CLUSTER_PREFIX=${1:-c1}
-CLUSTER_SUFFIX=${2:-".opencenter.com"}
-items=$($NOVA list | grep -i "${CLUSTER_PREFIX}-" | grep -i "${CLUSTER_SUFFIX}" | awk '{print $4}' )
+CLUSTER_PREFIX="c1"
+CLUSTER_SUFFIX=".opencentre.com"
 VERSION=1.0.0
 ####################
 
@@ -94,8 +93,12 @@ for arg in $@; do
             if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
                 CLUSTER_SUFFIX=$value
                 first_char=${CLUSTER_SUFFIX: 0:1}
-                if [ $first_char != . ]; then
+                if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
+                    echo "$CLUSTER_SUFFIX - adding ."
                     CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
+                elif [ $CLUSTER_SUFFIX = "None" ]; then
+                    CLUSTER_SUFFIX=""
+                    echo "$CLUSTER_SUFFIX"
                 fi
             fi
             ;;
@@ -113,10 +116,17 @@ for arg in $@; do
             ;;
         *)
             echo "Using $value as prefix, in future use -p=<prefix>"
-            usage
+            echo "See ./utils/wipe.sh -h for help"
+            CLUSTER_PREFIX=$value
             ;;
     esac
 done
 
+items=$($NOVA list | egrep -i "${CLUSTER_PREFIX}-opencenter-(client|server|dashboard)[0-9]*${CLUSTER_SUFFIX} " | awk '{print $4}' )
+
+if [[ ${#items[@]} -eq 0 ]]; then
+    echo "No servers with prefix $CLUSTER_PREFIX and suffix $CLUSTER_SUFFIX exist, exiting"
+    exit 1
+fi
 delete_items
 delete_network

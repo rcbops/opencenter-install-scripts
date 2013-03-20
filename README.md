@@ -18,7 +18,7 @@ Installing Opencenter Cluster
       -p --prefix=<Cluster Prefix>
           Specify the name prefix for the cluster - default "c1"
       -s --suffix=<Cluster Suffix>
-          Specify a cluster suffix - default ".opencenter.com"
+          Specify a cluster suffix - default ".opencentre.com"
       -c --clients=<Number of Clients>
           Specify the number of clients to install, in conjunction with a server & dashboard - default 2
       -pass --password=<Opencenter Server Password>
