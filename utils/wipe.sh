@@ -121,9 +121,15 @@ for arg in $@; do
             exit 0
             ;;
         *)
-            echo "Using $value as prefix, in future use -p=<prefix>"
-            echo "See ./utils/wipe.sh -h for help"
-            CLUSTER_PREFIX=$value
+            if [ ${#@} -eq 1 ] && [ $value = $flag ]; then
+                echo "Using $value as prefix, in future use -p=<prefix>"
+                echo "See ./utils/wipe.sh -h for help"
+                CLUSTER_PREFIX=$value
+            else
+                echo "Invalid options specified $flag"
+                usage
+                exit 1
+            fi
             ;;
     esac
 done
