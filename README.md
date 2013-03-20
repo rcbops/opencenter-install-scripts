@@ -41,12 +41,9 @@ Installing Opencenter Cluster
           Re-run the install scripts on the servers, rather than spin up new servers
           Can't be used in conjunction with --add-clients/-a
 
-* Number of Clients defaults to 2 if left unspecified
 * If you are using opencenter-client locally you can set your endpoint:
 export OPENCENTER_ENDPOINT=http://<ip of server>:8080
 * --packages will install from packages instead of github repos, not for Dev work.
-* --network will create a private network for the cluster defaulting to 192.168.0.0/24
-* network range can be specified as a CIDR by using --network=<CIDR>
 * --network will require nova with "network-create" functionality
 
 Prerequisities For Installing Opencenter Cluster
@@ -124,6 +121,9 @@ you can push updates and have the services restart automaticallyL
     ARGUMENTS:
        -p --prefix=<Cluster Prefix>
             Specify the name prefix for the cluster - default "c1"
+       -s --suffix=<Cluster Suffix>
+            Specify a cluster suffix - default ".opencentre.com"
+            Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
        -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
             Specify the projects to push - defaults to opencenter-all
        -r --repo-path=<Local path to repositories>
