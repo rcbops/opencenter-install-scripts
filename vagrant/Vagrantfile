@@ -7,11 +7,13 @@ server_ip = '172.20.0.10'
 
 # forwards use the same port on gues ant host
 instances = [
-  { :name => 'server', :roles => ['server','dashboard'], :ip => server_ip, 
+  { :name => 'server', :roles => ['server','dashboard'], :ips => [server_ip], 
     :forwards => [8080, 3000]},
-  { :name => 'chef', :roles => ['agent'], :ip => '172.20.0.11'},
-  { :name => 'controller', :roles => ['agent'], :ip => '172.20.0.12'},
-  { :name => 'compute', :roles => ['agent'], :ip => '172.20.0.13'}
+  { :name => 'chef', :roles => ['agent'], :ips => ['172.20.0.11']},
+  { :name => 'controller', :roles => ['agent'], :ips => ['172.20.0.12',
+    '172.21.0.12']},
+  { :name => 'compute', :roles => ['agent'], :ips => ['172.20.0.13', 
+    '172.21.0.13']}
 ]
 
 Vagrant.configure("2") do |config|
@@ -39,7 +41,9 @@ Vagrant.configure("2") do |config|
       config.vm.provider :virtualbox do |vb|
         vb.name = "%s-vagrant" % instance[:name].to_s
       end
-      config.vm.network :private_network, ip: instance[:ip]
+      instance[:ips].each do |ip|
+        config.vm.network :private_network, ip: ip
+      end
       if instance[:forwards]
         instance[:forwards].each do |port|
           config.vm.network :forwarded_port, guest: port, host: port
