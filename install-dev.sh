@@ -154,9 +154,9 @@ function do_git_update() {
 
     # Apply patch if one was specified - useful for testing a pull request
     pushd $repo
-    if [ ! -z ${PATCH_URLS[$repo]} ]
+    if [ ! -z ${PATCH_URLS[$repo]} ]; then
         if ! ( curl -s -n ${PATCH_URLS[$repo]} | git apply ); then
-            echo "Unable to merge patch ${PATCH_URLS[$repo]} into $repo."
+            echo "Unable to apply patch ${PATCH_URLS[$repo]} to $repo."
             exit 1
         fi
     fi
