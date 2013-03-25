@@ -151,6 +151,16 @@ function do_git_update() {
     else
         git clone https://github.com/rcbops/${repo} -b ${git_branch}
     fi
+
+    # Apply patch if one was specified - useful for testing a pull request
+    pushd $repo
+    if [ ! -z ${PATCH_URLS[$repo]} ]
+        if ! ( curl -s -n ${PATCH_URLS[$repo]} | git apply ); then
+            echo "Unable to merge patch ${PATCH_URLS[$repo]} into $repo."
+            exit 1
+        fi
+    fi
+    popd
 }
 
 function do_git_remove() {
@@ -454,7 +464,8 @@ yum_file_path="/etc/yum.repos.d/${yum_file_name}"
 epel_release="http://download.fedoraproject.org/pub/epel/6/i386/epel-release-6-8.noarch.rpm"
 ####################
 
-
+#URLs for patches that should be applied after each repo is cloned.
+declare -A PATCH_URLS
 
 for arg in $@; do
     flag=$(echo $arg | cut -d "=" -f1)
@@ -492,6 +503,9 @@ for arg in $@; do
             display_version
             exit 0
             ;;
+        "--server-patch-url") PATCH_URLS['opencenter']="$value" ;;
+        "--agent-patch-url") PATCH_URLS['opencenter-agent']="$value" ;;
+        "--client-patch-url") PATCH_URLS['opencenter-client']="$value" ;;
         *)
             echo "Invalid Option $flag"
             usage
