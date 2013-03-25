@@ -412,12 +412,14 @@ function get_platform() {
     fi
 
     # On ubuntu the version number needs to be mapped to a name
-    case $platform_version in
-        "12.04") platform_name="precise" ;;
-        *) echo "Unsupported/unknown version $platform_version" 
-           exit 1
-           ;;
-    esac
+    if [ $platform == "ubuntu"]
+      case $platform_version in
+          "12.04") platform_name="precise" ;;
+          *) echo "Unsupported/unknown version $platform_version" 
+             exit 1
+             ;;
+      esac
+    fi
 }
 
 function licensing() {
