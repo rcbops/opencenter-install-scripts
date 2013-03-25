@@ -412,7 +412,7 @@ function get_platform() {
     fi
 
     # On ubuntu the version number needs to be mapped to a name
-    if [ $platform == "ubuntu"]; then
+    if [ $platform == "ubuntu" ]; then
       case $platform_version in
           "12.04") platform_name="precise" ;;
           *) echo "Unsupported/unknown version $platform_version" 
