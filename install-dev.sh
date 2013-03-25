@@ -365,6 +365,11 @@ ARGUMENTS:
   -rr --rerun
          Rerun the script without having to create a new server
          Can be used to adjust IP information
+  --server-patch-url
+  --agent-patch-url
+  --client-patch-url
+         Retrieve and apply a patch to the project specified after cloning.
+         This can be useful for testing a proposed change.
 EOF
 }
 
