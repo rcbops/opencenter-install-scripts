@@ -151,7 +151,7 @@ ARGUMENTS:
   -p --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
   -s --suffix=<Cluster Suffix>
-         Specify a cluster suffix - default ".opencentre.com"
+         Specify a cluster suffix - default ".opencenter.com"
          Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
   -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
          Specify the projects to push - defaults to opencenter-all
@@ -182,7 +182,7 @@ SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 PUSHOPTS="${PUSHOPTS}"
 CLUSTER_PREFIX="c1"
-CLUSTER_SUFFIX=".opencentre.com"
+CLUSTER_SUFFIX=".opencenter.com"
 PUSH_PROJECT="opencenter-all"
 VERSION=1.0.0
 VERBOSE=

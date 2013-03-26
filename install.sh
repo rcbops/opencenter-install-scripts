@@ -231,7 +231,7 @@ opencenter-dashboard    opencenter/server_port  string ${SERVER_PORT}
 opencenter-dashboard    opencenter/server_ip    string ${OPENCENTER_SERVER}
 EOF
       if ! ( ${aptget} install -y -q ${dashboard_pkgs} ); then
-          echo "Failed to install Opencentre Dashboard"
+          echo "Failed to install Opencenter Dashboard"
           exit 1
       fi
   fi
@@ -314,7 +314,7 @@ function install_rpm() {
   if [ "${ROLE}" == "dashboard" ]; then
       echo "Installing Opencenter Dashboard"
       if ! ( yum install -y -q ${dashboard_pkgs} ); then
-          echo "Failed to install Opencentre Dashboard"
+          echo "Failed to install Opencenter Dashboard"
           exit 1
       fi
       # the opencenter-dashboard package restarts httpd, so this is
