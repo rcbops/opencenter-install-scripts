@@ -18,12 +18,12 @@ Installing Opencenter Cluster
       -p --prefix=<Cluster Prefix>
           Specify the name prefix for the cluster - default "c1"
       -s --suffix=<Cluster Suffix>
-          Specify a cluster suffix - default ".opencentre.com"
+          Specify a cluster suffix - default ".opencenter.com"
           Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
       -c --clients=<Number of Clients>
           Specify the number of clients to install, in conjunction with a server & dashboard - default 2
       -pass --password=<Opencenter Server Password>
-          Specify the Opencenter Server Password - only used for package installs - default "opencentre"
+          Specify the Opencenter Server Password - only used for package installs - default "opencenter"
       -pkg --packages
           Install using packages
       -a --add-clients
@@ -122,7 +122,7 @@ you can push updates and have the services restart automaticallyL
        -p --prefix=<Cluster Prefix>
             Specify the name prefix for the cluster - default "c1"
        -s --suffix=<Cluster Suffix>
-            Specify a cluster suffix - default ".opencentre.com"
+            Specify a cluster suffix - default ".opencenter.com"
             Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
        -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
             Specify the projects to push - defaults to opencenter-all

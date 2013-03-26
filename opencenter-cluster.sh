@@ -347,12 +347,12 @@ ARGUMENTS:
   -p --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
   -s --suffix=<Cluster Suffix>
-         Specify a cluster suffix - default ".opencentre.com"
+         Specify a cluster suffix - default ".opencenter.com"
          Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
   -c --clients=<Number of Clients>
          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
   -pass --password=<Opencenter Server Password>
-         Specify the Opencenter Server Password - only used for package installs - default "opencentre"
+         Specify the Opencenter Server Password - only used for package installs - default "opencenter"
   -pkg --packages
          Install using packages
   -a --add-clients
@@ -422,12 +422,12 @@ USE_PACKAGES=false
 USE_NETWORK=false
 PRIV_NETWORK="192.168.0.0/24"
 CLUSTER_PREFIX="c1"
-CLUSTER_SUFFIX=".opencentre.com"
+CLUSTER_SUFFIX=".opencenter.com"
 CLIENT_COUNT=2
 IMAGE_TYPE=${IMAGE_TYPE:-"12.04 LTS"}
 ADD_CLIENTS=false
 USE_NETWORK=false
-OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencentre"}
+OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"opencenter"}
 seq_count=0
 ####################
 

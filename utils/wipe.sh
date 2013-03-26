@@ -67,7 +67,7 @@ ARGUMENTS:
   -p --prefix=<Cluster Prefix>
         Specify the name prefix for the cluster - default "c1"
   -s --suffix=<Cluster Suffix>
-        Specify a cluster suffix - defaults ".opencentre.com"
+        Specify a cluster suffix - defaults ".opencenter.com"
         Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
 EOF
 }
@@ -83,7 +83,7 @@ EOF
 # Global Variables #
 NOVA=${NOVA:-nova}
 CLUSTER_PREFIX="c1"
-CLUSTER_SUFFIX=".opencentre.com"
+CLUSTER_SUFFIX=".opencenter.com"
 VERSION=1.0.0
 ####################
 
