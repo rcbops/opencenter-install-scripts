@@ -564,7 +564,7 @@ if ( $RERUN ) || ( $ADD_CLIENTS); then
     check_install_type
 fi
 if ( $RERUN ); then
-    if ( $NOVA list | egrep " ${CLUSTER_PREFIX}-opencenter-client[0-9]*${CLUSTER_SUFFIX} "); then
+    if ( $NOVA list | egrep -q " ${CLUSTER_PREFIX}-opencenter-client[0-9]*${CLUSTER_SUFFIX} "); then
         CLIENT_COUNT=$($NOVA list | sed -En "/${CLUSTER_PREFIX}-opencenter-client/ s/^.*${CLUSTER_PREFIX}-opencenter-client([0-9]*)${CLUSTER_SUFFIX} .*$/\1/p" | sort -rn | head -1 )
     elif ( $NOVA list | egrep " ${CLUSTER_PREFIX}-opencenter-server${CLUSTER_SUFFIX} "); then
         CLIENT_COUNT=0
