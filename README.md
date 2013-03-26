@@ -64,7 +64,7 @@ Prerequisities For Installing Opencenter Cluster
 Installing individual servers
 -----------------------
 
-    bash <(curl -L http://http://sh.opencenter.rackspace.com/install.sh) <options/arguments>
+    curl -s -L http://sh.opencenter.rackspace.com/install.sh | bash -s - <options/arguments>
 
     OPTIONS:
       -h --help  Show this message
