@@ -39,6 +39,7 @@ import argparse
 import re
 import pyrax
 
+
 class Quit(SystemExit):
     pass
 
@@ -96,9 +97,9 @@ class OpencenterCluster(object):
         self.prefix_addition = prefix_addition
         self.cs = cloudservers
         self.dnsmanager = dnsmanager
-        self.cluster_re = re.compile(r'^%s%s-(?P<role>.*)' %
-                                     (self.prefix, self.prefix_addition))
-
+        self.cluster_re = re.compile(r'^%s%s-(?P<role>[^.]*)(%s)?' %
+                                     (self.prefix, self.prefix_addition,
+                                      self.dnsmanager.domain.name))
 
     def get_instances(self):
         """returns an itterable of tuples (server_name,server_ip)"""
@@ -141,9 +142,6 @@ if __name__ == "__main__":
         raise Quit("Failed to authenticate: %s" % e)
 
     #syncdns print and quit if the syncdns option was specified
-    cluster = OpencenterCluster('',
-                           args.prefix,
-                           dnsmanager,
-                           cs)
+    cluster = OpencenterCluster('', args.prefix, dnsmanager, cs)
     cluster.sync_dns()
     print str(dnsmanager)
