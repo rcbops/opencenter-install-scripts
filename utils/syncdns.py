@@ -96,8 +96,9 @@ class OpencenterCluster(object):
         self.prefix_addition = prefix_addition
         self.cs = cloudservers
         self.dnsmanager = dnsmanager
-        self.cluster_re = re.compile(r'^%s%s-(?P<role>.*)' %
-                                     (self.prefix, self.prefix_addition))
+        self.cluster_re = re.compile(r'^%s%s-(?P<role>[^.]*)(%s)?' %
+                                     (self.prefix, self.prefix_addition,
+                                      self.dnsmanager.domain.name))
 
 
     def get_instances(self):
