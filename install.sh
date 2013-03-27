@@ -66,7 +66,7 @@ function install_opencenter_yum_repo() {
     "RedHat") releasever="6"; releasedir="RedHat" ;;
   esac
   echo "Adding OpenCenter yum repository $releasedir/$releasever"
-  if ![ -e ${yum_file_path} ] || !( grep -q "baseurl=$uri/$yum_pkg_path/$releasedir/$releasever/\$basearch/" $yum_file_path > /dev/null 2>&1 ); then
+  if ! [ -e ${yum_file_path} ] || ! ( grep -q "baseurl=$uri/$yum_pkg_path/$releasedir/$releasever/\$basearch/" $yum_file_path > /dev/null 2>&1 ); then
       cat > $yum_file_path <<EOF
 [$yum_repo]
 name=RCB Utility packages for OpenCenter $1
