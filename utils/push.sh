@@ -26,53 +26,14 @@
 
 set -e
 
-NOVA=${NOVA:-nova}
-REPO_PATH="../"
-exec 99>/tmp/push.log
-export BASH_XTRACEFD=99
-set -x
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-trap on_exit EXIT
-
 function on_exit() {
     if [ $? -ne 0 ]; then
         echo -e "\nERROR:\n"
         cat /tmp/push.log
-        rm /tmp/push.log
     fi
+    rm /tmp/push.log
 }
 
-declare -A PIDS
-declare -A IPADDRS
-
-SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
-PUSHOPTS="${PUSHOPTS}"
-CLUSTER_PREFIX="c1"
-
-if [ "x$1" != "x" ]; then
-    CLUSTER_PREFIX=$1
-fi
-
-PUSH_PROJECT="opencenter-all"
-
-if [ "x$2" != "x" ]; then
-    PUSH_PROJECT=$2
-else
-    echo "No option specified, defaulting to 'opencenter-all'"
-fi
-
-if [ $# -ge 3 ]; then
-    REPO_PATH=$3
-    last_char=${REPO_PATH: -1:1}
-    if [ $last_char != / ]; then
-        REPO_PATH="$REPO_PATH"/
-    fi
-    if [ ! -d ${REPO_PATH}opencenter-agent ] && [ ! -d ${REPO_PATH}opencenter ] && [ ! -d ${REPO_PATH}opencenter-client ] && [ ! -d ${REPO_PATH}opencenter-dashboard ]; then
-        echo "No repo's in specified path"
-        exit 1
-    fi
-fi
 
 function mangle_name() {
     server=$1
@@ -80,7 +41,7 @@ function mangle_name() {
     if [[ ${server} == ${CLUSTER_PREFIX}* ]]; then
         echo ${server}
     else
-        echo ${CLUSTER_PREFIX}-${server}
+        echo ${CLUSTER_PREFIX}-${server}${CLUSTER_SUFFIX}
     fi
 }
 
@@ -107,7 +68,7 @@ function repo_push() {
         if [ -f ${SCRIPT_DIR}/GIT_SSH ]; then
             export GIT_SSH="${SCRIPT_DIR}/GIT_SSH"
         fi
-        git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:master >&99 2>&1
+        git push ${PUSHOPTS} root@${ip}:/root/${repo} HEAD:sprint >&99 2>&1
         ssh ${SSHOPTS} root@${ip} "cd /root/${repo} && git reset --hard" >&99 2>&1
     fi
     popd >&99 2>&1
@@ -129,7 +90,7 @@ function push_opencenter_agent() {
     repo="opencenter"
     repo_push $repo $ip
     echo " - restarting opencenter-agent"
-    ssh ${SSHOPTS} root@${ip} /bin/bash -c "cd opencenter-agent; cd opencenter-agent; PYTHONPATH=../opencenter screen -S opencenter-agent -d -m ./opencenter-agent.py -v -c ./local.conf"
+    ssh ${SSHOPTS} root@${ip} /bin/bash -c "cd opencenter-agent; cd opencenter-agent; PYTHONPATH=../opencenter screen -S opencenter-agent -d -m ./opencenter-agent.py -v -c ./local.conf" >&99 2>&1
 }
 function push_opencenter_server() {
     if [ ! -d ${REPO_PATH}opencenter ]; then
@@ -143,7 +104,7 @@ function push_opencenter_server() {
     ssh ${SSHOPTS} root@${ip} 'if (pgrep -f opencenter.p[y]); then pkill -f opencenter.p[y]; fi' >&99 2>&1
     repo="opencenter"
     repo_push $repo $ip
-    echo " - Restarting opencenter"
+    echo " - restarting opencenter"
     ssh ${SSHOPTS} root@${ip} /bin/bash -c 'cd /root/opencenter; cd /root/opencenter; screen -S opencenter-server -d -m ./opencenter.py -v -c ./local.conf' >&99 2>&1
 }
 
@@ -175,7 +136,129 @@ function push_opencenter_dashboard() {
     ssh ${SSHOPTS} root@${ip} '/bin/bash -c "source /root/.profile;cd /root/opencenter-dashboard; make publish; ./dashboard"' >&99 2>&1
 }
 
-nodes=$($NOVA list |grep -o "${CLUSTER_PREFIX}-[a-zA-Z0-9_-]*" )
+function usage() {
+cat <<EOF
+usage: $0 options
+
+This script will install opencenter packages.
+
+OPTIONS:
+  -h --help  Show this message
+  -v --verbose  Verbose output
+  -V --version  Output the version of this script
+
+ARGUMENTS:
+  -p --prefix=<Cluster Prefix>
+         Specify the name prefix for the cluster - default "c1"
+  -s --suffix=<Cluster Suffix>
+         Specify a cluster suffix - default ".opencenter.com"
+         Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
+  -proj --project=[opencenter-all | opencenter | opencenter-agent | opencenter-client | dashboard]
+         Specify the projects to push - defaults to opencenter-all
+  -r --repo-path=<Local path to repositories>
+         Specify the local path to your repositories
+  -rs --rsync
+         Use rsync instead of git to push the repos
+  -f --force
+         Use "git push -f" to force the push
+EOF
+}
+
+
+function display_version() {
+cat <<EOF
+$0 (version: $VERSION)
+EOF
+}
+
+################################################
+# -*-*-*-*-*-*-*-*-*- MAIN -*-*-*-*-*-*-*-*-*- #
+################################################
+####################
+# Global Variables #
+NOVA=${NOVA:-nova}
+REPO_PATH="../"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
+PUSHOPTS="${PUSHOPTS}"
+CLUSTER_PREFIX="c1"
+CLUSTER_SUFFIX=".opencenter.com"
+PUSH_PROJECT="opencenter-all"
+VERSION=1.0.0
+VERBOSE=
+OC_SYNC='git'
+####################
+
+####################
+#   Declarations   #
+declare -A PIDS
+declare -A IPADDRS
+exec 99>/tmp/push.log
+export BASH_XTRACEFD=99
+trap on_exit EXIT
+####################
+
+for arg in $@; do
+    flag=$(echo $arg | cut -d "=" -f1)
+    value=$(echo $arg | cut -d "=" -f2)
+    case $flag in
+        "--prefix" | "-p")
+            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+                CLUSTER_PREFIX=$value
+            fi
+            ;;
+        "--suffix" | "-s")
+            if [ "$value" != "--suffix" ] && [ "$value" != "-s" ]; then
+                CLUSTER_SUFFIX=$value
+                first_char=${CLUSTER_SUFFIX: 0:1}
+                if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
+                    CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
+                elif [ $CLUSTER_SUFFIX = "None" ]; then
+                    CLUSTER_SUFFIX=""
+                fi
+            fi
+            ;;
+        "--project" | "-proj")
+            PUSH_PROJECT=$value
+            ;;
+        "--repo-path" | "-r")
+            REPO_PATH=$value
+            last_char=${REPO_PATH: -1:1}
+            if [ $last_char != / ]; then
+                REPO_PATH="$REPO_PATH"/
+            fi
+            if [ ! -d ${REPO_PATH}opencenter-agent ] && [ ! -d ${REPO_PATH}opencenter ] && [ ! -d ${REPO_PATH}opencenter-client ] && [ ! -d ${REPO_PATH}opencenter-dashboard ]; then
+                echo "No repo's in specified path"
+                exit 1
+            fi
+            ;;
+        "--rsync" | "-rs")
+            OC_SYNC='rsync'
+            ;;
+        "--force" | "-f")
+            PUSHOPTS="${PUSHOPTS} -f"
+            ;;
+        "--help" | "-h")
+            usage
+            exit 0
+            ;;
+        "--verbose" | "-v")
+            VERBOSE=1
+            set -x
+            ;;
+        "--version" | "-V")
+            display_version
+            exit 0
+            ;;
+        *)
+            echo "Invalid Option $flag"
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+nodes=$($NOVA list | egrep -i "${CLUSTER_PREFIX}-opencenter-(client|server|dashboard)[0-9]*${CLUSTER_SUFFIX} " | awk '{print $4}' )
 for node in ${nodes}; do
     IPADDRS[$node]=$(ip_for ${node})
 done
@@ -247,6 +330,6 @@ case "$PUSH_PROJECT" in
         ;;
 
     *)
-        echo "Usage: push.sh <Cluster-Prefix> {opencenter-all | opencenter | opencenter-client | opencenter-agent | opencenter-dashboard}"
+        usage
         exit 1
 esac

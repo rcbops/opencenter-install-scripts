@@ -25,20 +25,120 @@
 #
 #
 set -e
-NOVA=${NOVA:-nova}
-CLUSTER_PREFIX=${1:-c1}
-items=$($NOVA list |awk "\$4~/^\\s*${CLUSTER_PREFIX}-/{print \$4}" )
 
-for item in ${items}; do
-    echo "Deleting ${item}"
-    $NOVA delete ${item}
-    [ -e /tmp/${item}.log ] && rm /tmp/${item}.log
+function delete_items {
+    nova_uuid=""
+    for item in ${items}; do
+        echo "Deleting ${item}"
+        uuid=$($NOVA list | grep ${item} | awk '{print $2}' | head -1)
+        if [[ ${nova_uuid} = ${uuid} ]]; then
+            nova_uuid=$($NOVA list | grep ${item} | awk '{print $2}' | tail -1)
+        else
+            nova_uuid=$uuid
+        fi
+        $NOVA delete ${nova_uuid}
+        [ -e /tmp/${item}.log ] && rm /tmp/${item}.log
+    done
+}
+
+function delete_network {
+    if ( $NOVA network-list | grep -q -i ${CLUSTER_PREFIX} ); then
+        network_id=$($NOVA network-list | grep -i ${CLUSTER_PREFIX}-net | awk '{print $2}')
+        echo "Deleting ${CLUSTER_PREFIX}-net Network $network_id"
+        while !( $NOVA network-delete $network_id > /dev/null 2>&1 ); do
+            sleep 3
+        done
+    fi
+}
+
+function usage() {
+
+cat <<EOF
+usage: $0 options
+
+This script will delete an OpenCenter Cluster.
+
+OPTIONS:
+  -h --help  Show this message
+  -v --verbose  Verbose output
+  -V --version  Output the version of this script
+
+ARGUMENTS:
+  -p --prefix=<Cluster Prefix>
+        Specify the name prefix for the cluster - default "c1"
+  -s --suffix=<Cluster Suffix>
+        Specify a cluster suffix - defaults ".opencenter.com"
+        Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
+EOF
+}
+
+function display_version() {
+cat <<EOF
+$0 (version: $VERSION)
+EOF
+}
+
+
+####################
+# Global Variables #
+NOVA=${NOVA:-nova}
+CLUSTER_PREFIX="c1"
+CLUSTER_SUFFIX=".opencenter.com"
+VERSION=1.0.0
+####################
+
+
+for arg in $@; do
+    flag=$(echo $arg | cut -d "=" -f1)
+    value=$(echo $arg | cut -d "=" -f2)
+    case $flag in
+        "--prefix" | "-p")
+            if [ "$value" != "--prefix" ] && [ "$value" != "-p" ]; then
+                CLUSTER_PREFIX=$value
+            fi
+            ;;
+        "--suffix" | "-s")
+            if [ "$value" != "--suffix" ] && [ "$value" != "-s" ]; then
+                CLUSTER_SUFFIX=$value
+                first_char=${CLUSTER_SUFFIX: 0:1}
+                if [ $first_char != . ] && [ $CLUSTER_SUFFIX != "None" ]; then
+                    CLUSTER_SUFFIX=."$CLUSTER_SUFFIX"
+                elif [ $CLUSTER_SUFFIX = "None" ]; then
+                    CLUSTER_SUFFIX=""
+                fi
+            fi
+            ;;
+        "--help" | "-h")
+            usage
+            exit 0
+            ;;
+        "--verbose" | "-v")
+            VERBOSE=1
+            set -x
+            ;;
+        "--version" | "-V")
+            display_version
+            exit 0
+            ;;
+        *)
+            if [ ${#@} -eq 1 ] && [ $value = $flag ]; then
+                echo "Using $value as prefix, in future use -p=<prefix>"
+                echo "See ./utils/wipe.sh -h for help"
+                CLUSTER_PREFIX=$value
+            else
+                echo "Invalid options specified $flag"
+                usage
+                exit 1
+            fi
+            ;;
+    esac
 done
 
-if ( $NOVA network-list | grep -q ${CLUSTER_PREFIX} ); then
-    network_id=$($NOVA network-list | grep ${CLUSTER_PREFIX}-net | awk '{print $2}')
-    echo "Deleting ${CLUSTER_PREFIX}-net Network $network_id"
-    while !( $NOVA network-delete $network_id > /dev/null 2>&1 ); do
-        sleep 3
-    done
+items=$($NOVA list | egrep -i "${CLUSTER_PREFIX}-opencenter-(client|server|dashboard)[0-9]*${CLUSTER_SUFFIX} " | awk '{print $4}' )
+
+if [[ ${#items[@]} -eq 0 ]]; then
+    echo "No servers with prefix $CLUSTER_PREFIX and suffix $CLUSTER_SUFFIX exist, exiting"
+    exit 1
 fi
+delete_items
+delete_network
