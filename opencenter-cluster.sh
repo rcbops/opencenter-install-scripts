@@ -171,7 +171,7 @@ function setup_server_as() {
     fi
 
     if !( $USE_PACKAGES ); then
-        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip}"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip} ${git_dev_string}"
     else
         ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     fi
@@ -369,6 +369,12 @@ ARGUMENTS:
   -rr --rerun
          Re-run the install scripts on the servers, rather than spin up new servers
          Can't be used in conjunction with --add-clients/-a
+  -gb= --git-branch=<Git Branch>
+         This will only work with non-package installs, specifies the git-branch to use.
+         Defaults to "sprint"
+  -gu= --git-user=<Git User>
+         This will only work with non-package installs, specifies the user's repo to use.
+         Defaults to "rcbops"
 EOF
 }
 
@@ -452,6 +458,7 @@ network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
 network_value=""
 verbose_string=""
 rerun_string=""
+git_dev_string=""
 key_location=${HOME}/.ssh/authorized_keys
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 ####################
@@ -494,6 +501,11 @@ for arg in $@; do
             fi
             ;;
         "--packages" | "-pkg")
+            if [ "$git_dev_string" != "" ]; then
+                echo "Can't use --git-user or --git-branch with Packages"
+                echo "Ignoring --git-branch/--git-user setting"
+                git_dev_string=""
+            fi
             USE_PACKAGES=true
             DASHBOARD_PORT=443
             server_port=8443
@@ -534,6 +546,26 @@ for arg in $@; do
             fi
             RERUN=true
             rerun_string="--rerun"
+            ;;
+        "--git-branch" | "-gb")
+            if [ "$value" != "--git-branch" ] && [ "$value" != "-gb" ]; then
+                git_dev_string="$git_dev_string-gb=$value "
+            fi
+            if ( $USE_PACKAGES ); then
+                echo "Can't use --git-branch with packages"
+                echo "Ignoring --git-user setting and continuing"
+                git_dev_string=""
+            fi
+            ;;
+        "--git-user" | "-gu")
+            if [ "$value" != "--git-user" ] && [ "$value" != "-gu" ]; then
+                git_dev_string="$git_dev_string-gu=$value "
+            fi
+            if ( $USE_PACKAGES ); then
+                echo "Can't use --git-user with packages"
+                echo "Ignoring --git-user setting and continuing"
+                git_dev_string=""
+            fi
             ;;
         "--help" | "-h")
             usage

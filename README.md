@@ -15,14 +15,14 @@ Installing Opencenter Cluster
       -V --version  Output the version of this script
 
     ARGUMENTS:
-      -p --prefix=<Cluster Prefix>
+      -p= --prefix=<Cluster Prefix>
           Specify the name prefix for the cluster - default "c1"
-      -s --suffix=<Cluster Suffix>
+      -s= --suffix=<Cluster Suffix>
           Specify a cluster suffix - default ".opencenter.com"
           Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
-      -c --clients=<Number of Clients>
+      -c= --clients=<Number of Clients>
           Specify the number of clients to install, in conjunction with a server & dashboard - default 2
-      -pass --password=<Opencenter Server Password>
+      -pass= --password=<Opencenter Server Password>
           Specify the Opencenter Server Password - only used for package installs - default "opencenter"
       -pkg --packages
           Install using packages
@@ -30,16 +30,22 @@ Installing Opencenter Cluster
           Add clients to existing cluster specified by --prefix
           NB - If password was used for original cluster, password must be the same as existing cluster's password
           Can't be used in conjunction with --rerun/-rr
-      -n --network=<CIDR>|<Existing network name>|<Existing network uuid>
+      -n= --network=<CIDR>|<Existing network name>|<Existing network uuid>
           Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
           You can specify an existing network name or network uuid
-      -o --os=[redhat | centos | ubuntu | fedora ]
+      -o= --os=[redhat | centos | ubuntu | fedora ]
           Specify the OS to install on the servers - default ubuntu
-      -pk --public-key=[location of key file]
+      -pk= --public-key=[location of key file]
           Specify the location of the key file to inject onto the cloud servers
       -rr --rerun
           Re-run the install scripts on the servers, rather than spin up new servers
           Can't be used in conjunction with --add-clients/-a
+      -gb= --git-branch=<Git Branch>
+          This will only work with non-package installs, specifies the git-branch to use.
+          Defaults to "sprint"
+      -gu= --git-user=<Git Branch>
+          This will only work with non-package installs, specifies the user's repo to use.
+          Defaults to "rcbops"
 
 * If you are using opencenter-client locally you can set your endpoint:
 export OPENCENTER_ENDPOINT=http://<ip of server>:8080
