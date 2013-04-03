@@ -360,16 +360,16 @@ OPTIONS:
   -V --version  Display script version
 
 ARGUMENTS:
-  -r --role=[server | agent | dashboard]
+  -r= --role=[server | agent | dashboard]
          Specify the role of the node - defaults to "agent"
-  -i --ip=<Opencenter Server IP>
+  -i= --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
   -rr --rerun
          Rerun the script without having to create a new server
          Can be used to adjust IP information
-  --server-patch-url
-  --agent-patch-url
-  --client-patch-url
+  --server-patch-url=<URL>
+  --agent-patch-url=<URL>
+  --client-patch-url=<URL>
          Retrieve and apply a patch to the project specified after cloning.
          This can be useful for testing a proposed change.
 EOF

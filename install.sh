@@ -377,11 +377,11 @@ OPTIONS:
   -V --version Output the version of this script
 
 ARGUMENTS:
-  -r --role=[agent | server | dashboard]
+  -r= --role=[agent | server | dashboard]
          Specify the role of the node - defaults to "agent"
-  -i --ip=<Opencenter Server IP>
+  -i= --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
-  -p --password=<Opencenter Server IP>
+  -p= --password=<Opencenter Server IP>
          Specify the Opencenter Server Password - defaults to "password"
   -rr --rerun
          Removes packages and reinstalls them
