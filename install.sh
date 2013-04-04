@@ -97,7 +97,7 @@ function install_opencenter_apt_repo() {
   echo "Adding Opencenter apt repository"
 
   if [ -e ${apt_file_path} ]; then
-    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path >/dev/null 2>&1 ); then
        echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
     fi
   else
@@ -105,15 +105,17 @@ function install_opencenter_apt_repo() {
   fi
 
   if [[ -z $VERBOSE ]]; then
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1 ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   else
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key}
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   fi
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to add apt-key."
-    exit 1
-  fi
 }
 
 function clean_ubuntu() {
