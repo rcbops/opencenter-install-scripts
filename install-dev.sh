@@ -143,14 +143,17 @@ function setup_aliases() {
 function do_git_update() {
     # $1 = repo name
     repo=$1
-    if [ -d ${repo} ]; then
-        pushd ${repo}
-        git checkout ${git_branch}
-        git pull origin ${git_branch}
-        popd
-    else
-        git clone https://github.com/${git_user}/${repo} -b ${git_branch}
+    if ! [ -d ${repo} ]; then
+        git clone https://github.com/${git_user}/${repo}
     fi
+    pushd ${repo}
+    if ! ( git checkout ${git_branch} ); then
+        echo "No branch ${git_branch} for ${repo} defaulting to sprint"
+        git_branch=sprint
+    fi
+    git checkout ${git_branch}
+    git pull origin ${git_branch}
+    popd
 
     # Apply patch if one was specified - useful for testing a pull request
     pushd $repo
