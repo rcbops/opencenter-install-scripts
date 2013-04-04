@@ -103,7 +103,7 @@ function install_apt_repo() {
 
   if [ -e ${apt_file_path} ];
   then
-    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path > /dev/null 2>&1 ); then
         echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
     fi
   else
@@ -111,14 +111,15 @@ function install_apt_repo() {
   fi
 
   if [[ -z $VERBOSE ]]; then
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1 ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   else
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key}
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to add apt-key."
-    exit 1
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   fi
 }
 
