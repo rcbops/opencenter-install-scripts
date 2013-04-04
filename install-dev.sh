@@ -179,14 +179,14 @@ function do_git_remove() {
     fi
 }
 
-function kill_agents() {
-    ps -ef | grep "SCREEN -S opencenter-agent" | grep -v grep | awk '{print $2}' | xargs -i kill {}
+function kill_opencenter() {
+    ps -ef | grep "SCREEN -S opencenter" | grep -v grep | awk '{print $2}' | xargs -i kill {}
 }
 
 function git_setup() {
   if [ "${ROLE}" != "dashboard" ]; then
       if ( $RERUN ); then
-         kill_agents
+         kill_opencenter
          do_git_remove opencenter
          do_git_remove opencenter-agent
          do_git_remove opencenter-client
