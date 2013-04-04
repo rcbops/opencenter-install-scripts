@@ -173,15 +173,20 @@ function do_git_remove() {
     repo=$1
     if [ -d ${repo} ]; then
         pushd ${repo}
-        git reset --hard origin/sprint
+        current_branch=$(git branch | grep "*" | awk '{print $2}')
+        git reset --hard origin/${current_branch}
         popd
     fi
 }
 
+function kill_agents() {
+    ps -ef | grep "SCREEN -S opencenter-agent" | grep -v grep | awk '{print $2}' | xargs -i kill {}
+}
 
 function git_setup() {
   if [ "${ROLE}" != "dashboard" ]; then
       if ( $RERUN ); then
+         kill_agents
          do_git_remove opencenter
          do_git_remove opencenter-agent
          do_git_remove opencenter-client
