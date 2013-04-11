@@ -92,7 +92,7 @@ EOF
 
 function install_opencenter_apt_repo() {
   local aptkey=$(which apt-key)
-  local keyserver="keyserver.ubuntu.com"
+  local keyserver="hkp://keyserver.ubuntu.com:80"
 
   echo "Adding Opencenter apt repository"
 
