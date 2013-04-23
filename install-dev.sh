@@ -103,7 +103,7 @@ function install_apt_repo() {
 
   if [ -e ${apt_file_path} ];
   then
-    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path > /dev/null 2>&1 ); then
         echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
     fi
   else
@@ -111,14 +111,15 @@ function install_apt_repo() {
   fi
 
   if [[ -z $VERBOSE ]]; then
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1 ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   else
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key}
-  fi
-
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to add apt-key."
-    exit 1
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   fi
 }
 
@@ -143,14 +144,27 @@ function setup_aliases() {
 function do_git_update() {
     # $1 = repo name
     repo=$1
-    if [ -d ${repo} ]; then
-        pushd ${repo}
-        git checkout ${git_branch}
-        git pull origin ${git_branch}
-        popd
-    else
-        git clone https://github.com/rcbops/${repo} -b ${git_branch}
+    tmp_branch=$git_branch
+    tmp_user=$git_user
+    if ! [ -d ${repo} ]; then
+        if ! ( git clone https://github.com/${tmp_user}/${repo} ); then
+            tmp_user=rcbops
+            tmp_branch=sprint
+            git clone https://github.com/${tmp_user}/${repo}
+        fi
     fi
+    pushd ${repo}
+    if ! ( git checkout ${tmp_branch} ); then
+        echo "No branch ${tmp_branch} for ${repo} defaulting to sprint using rcbops user"
+        tmp_branch=sprint
+        tmp_user=rcbops
+        popd
+        rm -rf ${repo}
+        git clone https://github.com/${tmp_user}/${repo}
+        pushd ${repo}
+    fi
+    git pull origin ${tmp_branch}
+    popd
 
     # Apply patch if one was specified - useful for testing a pull request
     pushd $repo
@@ -170,15 +184,20 @@ function do_git_remove() {
     repo=$1
     if [ -d ${repo} ]; then
         pushd ${repo}
-        git reset --hard origin/sprint
+        current_branch=$(git branch | grep "*" | awk '{print $2}')
+        git reset --hard origin/${current_branch}
         popd
     fi
 }
 
+function kill_opencenter() {
+    ps -ef | grep "SCREEN -S opencenter" | grep -v grep | awk '{print $2}' | xargs -i kill {}
+}
 
 function git_setup() {
   if [ "${ROLE}" != "dashboard" ]; then
       if ( $RERUN ); then
+         kill_opencenter
          do_git_remove opencenter
          do_git_remove opencenter-agent
          do_git_remove opencenter-client
@@ -360,16 +379,20 @@ OPTIONS:
   -V --version  Display script version
 
 ARGUMENTS:
-  -r --role=[server | agent | dashboard]
+  -r= --role=[server | agent | dashboard]
          Specify the role of the node - defaults to "agent"
-  -i --ip=<Opencenter Server IP>
+  -i= --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
   -rr --rerun
          Rerun the script without having to create a new server
          Can be used to adjust IP information
-  --server-patch-url
-  --agent-patch-url
-  --client-patch-url
+  -gb= --git-branch=<Git Branch>
+         Specify the git branch to use, defaults to "sprint"
+  -gu= --git-user=<Git User>
+         Specify the git user to use, defaults to "rcbops"
+  --server-patch-url=<URL>
+  --agent-patch-url=<URL>
+  --client-patch-url=<URL>
          Retrieve and apply a patch to the project specified after cloning.
          This can be useful for testing a proposed change.
 EOF
@@ -440,6 +463,7 @@ SERVER_PORT="8080"
 VERSION=1.0.0
 VERBOSE=
 git_branch=sprint
+git_user=rcbops
 ####################
 
 ####################
@@ -497,6 +521,16 @@ for arg in $@; do
             ;;
         "--rerun" | "-rr")
             RERUN=true
+            ;;
+        "--git-branch" | "-gb")
+            if [ "$value" != "--git-branch" ] && [ "$value" != "-gb" ]; then
+                git_branch=$value
+            fi
+            ;;
+        "--git-user" | "-gu")
+            if [ "$value" != "--git-user" ] && [ "$value" != "-gu" ]; then
+                git_user=$value
+            fi
             ;;
         "--help" | "-h")
             usage

@@ -171,7 +171,7 @@ function setup_server_as() {
     fi
 
     if !( $USE_PACKAGES ); then
-        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip}"
+        ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip} ${git_dev_string}"
     else
         ssh ${SSHOPTS} root@$(ip_for ${server}) "cat /tmp/${scriptName}.sh | /bin/bash -s - ${verbose_string} ${rerun_string} --role=${as} --ip=${ip} --password=${OPENCENTER_PASSWORD}"
     fi
@@ -344,14 +344,14 @@ OPTIONS:
   -V --version  Output the version of this script
 
 ARGUMENTS:
-  -p --prefix=<Cluster Prefix>
+  -p= --prefix=<Cluster Prefix>
          Specify the name prefix for the cluster - default "c1"
-  -s --suffix=<Cluster Suffix>
+  -s= --suffix=<Cluster Suffix>
          Specify a cluster suffix - default ".opencenter.com"
          Specifying "None" will use short name, e.g. just <Prefix>-opencenter-sever
-  -c --clients=<Number of Clients>
+  -c= --clients=<Number of Clients>
          Specify the number of clients to install, in conjunction with a server & dashboard - default 2
-  -pass --password=<Opencenter Server Password>
+  -pass= --password=<Opencenter Server Password>
          Specify the Opencenter Server Password - only used for package installs - default "opencenter"
   -pkg --packages
          Install using packages
@@ -359,16 +359,22 @@ ARGUMENTS:
          Add clients to Opencenter Cluster specified by Prefix
          Can't be used in conjunction with --rerun/-rr
          NB - If password was used for original cluster, password must be the same as existing cluster's password
-  -n --network=<CIDR>|<Existing network name>|<Existing network uuid>
+  -n= --network=<CIDR>|<Existing network name>|<Existing network uuid>
          Setup a private cloud networks, will require "nova network-create" command - default 192.168.0.0/24
          You can specify an existing network name or network uuid
-  -o --os=[redhat | centos | ubuntu | fedora ]
+  -o= --os=[redhat | centos | ubuntu | fedora ]
          Specify the OS to install on the servers - default ubuntu
-  -pk --public-key=[location of key file]
+  -pk= --public-key=[location of key file]
          Specify the location of the key file to inject onto the cloud servers
   -rr --rerun
          Re-run the install scripts on the servers, rather than spin up new servers
          Can't be used in conjunction with --add-clients/-a
+  -gb= --git-branch=<Git Branch>
+         This will only work with non-package installs, specifies the git-branch to use.
+         Defaults to "sprint"
+  -gu= --git-user=<Git User>
+         This will only work with non-package installs, specifies the user's repo to use.
+         Defaults to "rcbops"
 EOF
 }
 
@@ -452,6 +458,7 @@ network_string="--nic net-id=00000000-0000-0000-0000-000000000000"
 network_value=""
 verbose_string=""
 rerun_string=""
+git_dev_string=""
 key_location=${HOME}/.ssh/authorized_keys
 SSHOPTS="-q -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
 ####################
@@ -494,6 +501,11 @@ for arg in $@; do
             fi
             ;;
         "--packages" | "-pkg")
+            if [ "$git_dev_string" != "" ]; then
+                echo "Can't use --git-user or --git-branch with Packages"
+                echo "Ignoring --git-branch/--git-user setting"
+                git_dev_string=""
+            fi
             USE_PACKAGES=true
             DASHBOARD_PORT=443
             server_port=8443
@@ -534,6 +546,26 @@ for arg in $@; do
             fi
             RERUN=true
             rerun_string="--rerun"
+            ;;
+        "--git-branch" | "-gb")
+            if [ "$value" != "--git-branch" ] && [ "$value" != "-gb" ]; then
+                git_dev_string="$git_dev_string-gb=$value "
+            fi
+            if ( $USE_PACKAGES ); then
+                echo "Can't use --git-branch with packages"
+                echo "Ignoring --git-user setting and continuing"
+                git_dev_string=""
+            fi
+            ;;
+        "--git-user" | "-gu")
+            if [ "$value" != "--git-user" ] && [ "$value" != "-gu" ]; then
+                git_dev_string="$git_dev_string-gu=$value "
+            fi
+            if ( $USE_PACKAGES ); then
+                echo "Can't use --git-user with packages"
+                echo "Ignoring --git-user setting and continuing"
+                git_dev_string=""
+            fi
             ;;
         "--help" | "-h")
             usage

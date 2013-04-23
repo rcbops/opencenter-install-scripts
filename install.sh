@@ -92,12 +92,12 @@ EOF
 
 function install_opencenter_apt_repo() {
   local aptkey=$(which apt-key)
-  local keyserver="keyserver.ubuntu.com"
+  local keyserver="hkp://keyserver.ubuntu.com:80"
 
   echo "Adding Opencenter apt repository"
 
   if [ -e ${apt_file_path} ]; then
-    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path ); then
+    if ! ( grep "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" $apt_file_path >/dev/null 2>&1 ); then
        echo "deb ${uri}/${apt_pkg_path} ${platform_name} ${apt_repo}" > $apt_file_path
     fi
   else
@@ -105,15 +105,17 @@ function install_opencenter_apt_repo() {
   fi
 
   if [[ -z $VERBOSE ]]; then
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} >/dev/null 2>&1 ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   else
-    ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key}
+      if ! ( ${aptkey} adv --keyserver ${keyserver} --recv-keys ${apt_key} ); then
+          echo "Unable to add apt-key"
+          exit 1
+      fi
   fi
 
-  if [[ $? -ne 0 ]]; then
-    echo "Unable to add apt-key."
-    exit 1
-  fi
 }
 
 function clean_ubuntu() {
@@ -377,11 +379,11 @@ OPTIONS:
   -V --version Output the version of this script
 
 ARGUMENTS:
-  -r --role=[agent | server | dashboard]
+  -r= --role=[agent | server | dashboard]
          Specify the role of the node - defaults to "agent"
-  -i --ip=<Opencenter Server IP>
+  -i= --ip=<Opencenter Server IP>
          Specify the Opencenter Server IP - defaults to "0.0.0.0"
-  -p --password=<Opencenter Server IP>
+  -p= --password=<Opencenter Server IP>
          Specify the Opencenter Server Password - defaults to "password"
   -rr --rerun
          Removes packages and reinstalls them
@@ -479,7 +481,7 @@ VERBOSE=
 ROLE="agent"
 OPENCENTER_SERVER=${OPENCENTER_SERVER:-"0.0.0.0"}
 SERVER_PORT="8443"
-VERSION="1.0.0"
+VERSION="2.1.0"
 OPENCENTER_PASSWORD=${OPENCENTER_PASSWORD:-"password"}
 ####################
 
