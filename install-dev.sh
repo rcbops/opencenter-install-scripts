@@ -144,16 +144,26 @@ function setup_aliases() {
 function do_git_update() {
     # $1 = repo name
     repo=$1
+    tmp_branch=$git_branch
+    tmp_user=$git_user
     if ! [ -d ${repo} ]; then
-        git clone https://github.com/${git_user}/${repo}
+        if ! ( git clone https://github.com/${tmp_user}/${repo} ); then
+            tmp_user=rcbops
+            tmp_branch=sprint
+            git clone https://github.com/${tmp_user}/${repo}
+        fi
     fi
     pushd ${repo}
-    if ! ( git checkout ${git_branch} ); then
-        echo "No branch ${git_branch} for ${repo} defaulting to sprint"
-        git_branch=sprint
+    if ! ( git checkout ${tmp_branch} ); then
+        echo "No branch ${tmp_branch} for ${repo} defaulting to sprint using rcbops user"
+        tmp_branch=sprint
+        tmp_user=rcbops
+        popd
+        rm -rf ${repo}
+        git clone https://github.com/${tmp_user}/${repo}
+        pushd ${repo}
     fi
-    git checkout ${git_branch}
-    git pull origin ${git_branch}
+    git pull origin ${tmp_branch}
     popd
 
     # Apply patch if one was specified - useful for testing a pull request
