@@ -157,9 +157,10 @@ function do_git_update() {
     if ! ( git checkout ${tmp_branch} ); then
         echo "No branch ${tmp_branch} for ${repo} defaulting to sprint using rcbops user"
         tmp_branch=sprint
+        tmp_user=rcbops
         popd
         rm -rf ${repo}
-        git clone https://github.com/rcbops/${repo}
+        git clone https://github.com/${tmp_user}/${repo}
         pushd ${repo}
     fi
     git pull origin ${tmp_branch}
